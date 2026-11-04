@@ -6,6 +6,8 @@ Same H.264 video, 1920 × 1080 at 24 fps, original encoded video packets preserv
 
 CPU means percentage of one core for the app and its descendants. GPU work and shared macOS services are excluded. Short samples do not demonstrate multi-day memory stability.
 
+The matched desktop measurements below used the desktop-player build before native lock-screen integration. The native aerial renderer has its own memory footprint; app-only measurements do not establish whole-system resource savings. Later lifecycle and lock-screen checks are recorded separately.
+
 | Workload | Dynamic Wallpaper | Torii | CPU reduction |
 | --- | ---: | ---: | ---: |
 | Desktop behind a maximized normal window | 2.353% | 0.045% | 52.5× |
@@ -15,9 +17,13 @@ Covered samples lasted about 61 seconds each. Continuous samples lasted about 92
 
 The requested 4× threshold is exceeded for hidden-desktop CPU use. It is not met for continuous playback or healthy fresh memory use. Torii's mean app physical footprint during continuous playback was 25.44 MiB. Physical footprint is distinct from resident memory and the historical `top` reading.
 
-Live playback testing collected 44 snapshots across multiple full loops, checked the queue stayed bounded to at most three items, and verified pause froze the playback clock and resume restored playback. The installed native screen-saver bundle also passed a real-window playback, loop, and complete teardown test. The system Settings preview was visually checked. A locked password-entry screen was not tested; macOS controls that surface and Torii uses a matching still there.
+Live playback testing collected 44 snapshots across multiple full loops, checked the queue stayed bounded to at most three items, and verified pause froze the playback clock and resume restored playback. The installed native screen-saver bundle also passed a real-window playback, loop, and complete teardown test.
 
-Native MP4-import tests verified rejection of non-MP4 input, audio removal, unchanged resolution, frame rate, rotation and duration, and preparation without changing the current wallpaper. Source, imported desktop media, the former app's silent copy, and screen-saver media had the same encoded video SHA-256:
+The native lock-screen integration was checked on the actual locked `loginwindow` surface. Two captures showed motion in the hair, clothing, and rain while Torii reported `Session locked` with zero desktop queue items. Native renderer logs showed 144 frames enqueued over six seconds without dropped frames. The user unlocked the Mac; authentication was not automated. The restore/reapply integration test recovered the previous aerial movie byte-for-byte, then reapplied the custom video. Native configuration and capture evidence are recorded in the companion JSON files.
+
+The decoder lifecycle test exercised twenty load/seek/play/unload cycles, including restoration of the saved position and removal of playback resources. Its final-five paused footprint averaged 12.40 MiB versus 11.73 MiB for the initial five. This is a component-level lifecycle check, not a fresh app benchmark or a multi-day soak. An app-wide repeated-cycle test requires an awake, unlocked session and stops if macOS suspends playback.
+
+Native MP4-import tests verified rejection of non-MP4 input, audio removal, unchanged resolution, frame rate, rotation and duration, and preparation without changing the current wallpaper. Import was also exercised through the single menu-bar popover with lock-screen animation enabled. Source, imported desktop media, the former app's silent copy, screen-saver media, and the first 960 frames of the ten-minute native lock-screen movie had the same encoded video SHA-256:
 
 ```
 6597e6ccdcb5372e7343569a14e905d3a34d1ffda191a2b482c2d861c32c31b9

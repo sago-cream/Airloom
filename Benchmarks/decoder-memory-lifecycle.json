@@ -1,0 +1,109 @@
+{
+  "cycles" : 20,
+  "final_paused_mean_mib" : 12.403811645507812,
+  "growth_mib" : 0.67499999999999893,
+  "initial_paused_mean_mib" : 11.728811645507813,
+  "limitation" : "Component lifecycle test; not an app-wide or multi-day memory benchmark",
+  "samples" : [
+    {
+      "active_footprint_mib" : 12.110061645507812,
+      "cycle" : 1,
+      "paused_footprint_mib" : 11.516311645507812
+    },
+    {
+      "active_footprint_mib" : 12.672584533691406,
+      "cycle" : 2,
+      "paused_footprint_mib" : 11.672561645507812
+    },
+    {
+      "active_footprint_mib" : 12.219436645507812,
+      "cycle" : 3,
+      "paused_footprint_mib" : 11.766311645507812
+    },
+    {
+      "active_footprint_mib" : 13.985061645507812,
+      "cycle" : 4,
+      "paused_footprint_mib" : 11.844436645507812
+    },
+    {
+      "active_footprint_mib" : 12.500709533691406,
+      "cycle" : 5,
+      "paused_footprint_mib" : 11.844436645507812
+    },
+    {
+      "active_footprint_mib" : 12.375709533691406,
+      "cycle" : 6,
+      "paused_footprint_mib" : 11.891311645507812
+    },
+    {
+      "active_footprint_mib" : 12.672584533691406,
+      "cycle" : 7,
+      "paused_footprint_mib" : 12.063186645507812
+    },
+    {
+      "active_footprint_mib" : 12.750709533691406,
+      "cycle" : 8,
+      "paused_footprint_mib" : 12.110061645507812
+    },
+    {
+      "active_footprint_mib" : 12.453834533691406,
+      "cycle" : 9,
+      "paused_footprint_mib" : 12.156936645507812
+    },
+    {
+      "active_footprint_mib" : 13.406959533691406,
+      "cycle" : 10,
+      "paused_footprint_mib" : 12.266311645507812
+    },
+    {
+      "active_footprint_mib" : 12.703811645507812,
+      "cycle" : 11,
+      "paused_footprint_mib" : 12.235061645507812
+    },
+    {
+      "active_footprint_mib" : 12.610061645507812,
+      "cycle" : 12,
+      "paused_footprint_mib" : 12.297561645507812
+    },
+    {
+      "active_footprint_mib" : 13.813186645507812,
+      "cycle" : 13,
+      "paused_footprint_mib" : 12.360061645507812
+    },
+    {
+      "active_footprint_mib" : 12.672561645507812,
+      "cycle" : 14,
+      "paused_footprint_mib" : 12.360061645507812
+    },
+    {
+      "active_footprint_mib" : 12.672561645507812,
+      "cycle" : 15,
+      "paused_footprint_mib" : 12.360061645507812
+    },
+    {
+      "active_footprint_mib" : 12.735061645507812,
+      "cycle" : 16,
+      "paused_footprint_mib" : 12.360061645507812
+    },
+    {
+      "active_footprint_mib" : 12.688186645507812,
+      "cycle" : 17,
+      "paused_footprint_mib" : 12.391311645507812
+    },
+    {
+      "active_footprint_mib" : 12.688186645507812,
+      "cycle" : 18,
+      "paused_footprint_mib" : 12.406936645507812
+    },
+    {
+      "active_footprint_mib" : 13.235084533691406,
+      "cycle" : 19,
+      "paused_footprint_mib" : 12.438186645507812
+    },
+    {
+      "active_footprint_mib" : 13.235084533691406,
+      "cycle" : 20,
+      "paused_footprint_mib" : 12.422561645507812
+    }
+  ]
+}

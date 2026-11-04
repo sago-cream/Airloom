@@ -1,0 +1,25 @@
+{
+  "os": "macOS 26.6.2",
+  "asset_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1",
+  "native_movie_seconds": 600,
+  "video_codec": "h264",
+  "width": 1920,
+  "height": 1080,
+  "fps": 24,
+  "audio_tracks": 0,
+  "real_loginwindow_capture": true,
+  "first_capture_bytes": 1093048,
+  "second_capture_bytes": 1106041,
+  "encoded_bytes_different": 1096726,
+  "visual_motion_verified": [
+    "hair",
+    "clothing",
+    "rain"
+  ],
+  "desktop_player_state_while_locked": "Session locked",
+  "desktop_queue_items_while_locked": 0,
+  "native_renderer_frames_enqueued_in_6_seconds": 144,
+  "native_renderer_dropped_frames": 0,
+  "unlock_observed": true,
+  "authentication_handled_by": "macOS, unlocked by user"
+}

@@ -1,0 +1,23 @@
+{
+  "restore_cycle": false,
+  "native_asset_selected": true,
+  "desktop_and_lock_selection_match": true,
+  "native_movie": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "24/1"
+      }
+    ],
+    "format": {
+      "duration": "600.000000"
+    }
+  },
+  "restore_cycle_verified": true,
+  "restore_evidence": "The completed --restore-cycle run verified byte-for-byte restore and reapplied the custom video; later read-only checks do not repeat that operation."
+}
