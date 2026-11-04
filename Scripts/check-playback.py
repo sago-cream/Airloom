@@ -55,8 +55,13 @@ def main():
         assert a["rate"] == b["rate"] == 0
         assert abs(a["time_seconds"] - b["time_seconds"]) < 0.1
     command("--resume")
-    time.sleep(0.5)
-    resumed = snapshot()
+    resume_deadline = time.monotonic() + 5
+    while True:
+        resumed = snapshot()
+        if all(d["rate"] == 1 and d["ready"] for d in resumed["displays"]):
+            break
+        assert time.monotonic() < resume_deadline, "Playback did not resume within five seconds"
+        time.sleep(0.1)
     assert resumed["state"] == "Playing"
     assert all(d["rate"] == 1 for d in resumed["displays"])
     args.output.write_text(json.dumps({"samples": samples, "paused": second, "resumed": resumed}, indent=2) + "\n")

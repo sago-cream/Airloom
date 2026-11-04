@@ -38,3 +38,23 @@ expect(!WindowCoverage.isCovered(desktop, by: [
 ]), "Overlaps must not double-count coverage")
 expect(!WindowCoverage.isCovered(desktop, by: [CGRect(x: 0, y: 0, width: 1000, height: 700)]), "A visible strip must keep animation")
 print("Window coverage tests passed")
+let before: [String: Any] = ["SystemDefault": ["Type": "original"], "AllSpacesAndDisplays": "$null",
+    "Displays": ["display": ["Type": "original"]], "Spaces": ["space": ["Default": ["Type": "original"],
+    "Displays": ["display": ["Type": "original"]], "keep": "space metadata"]], "unknown": "preserve"]
+let slot = "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
+let selected = try AerialConfiguration.selecting(slot, in: before)
+expect(AerialConfiguration.assetID(in: selected["SystemDefault"]) == slot, "The native aerial must be selected")
+expect(selected["unknown"] as? String == "preserve", "Unknown wallpaper fields must survive")
+let selectedSpaces = selected["Spaces"] as! [String: [String: Any]]
+expect(selectedSpaces["space"]?["keep"] as? String == "space metadata", "Space metadata must survive")
+let restored = AerialConfiguration.restoring(before, in: selected, slotID: slot)
+expect((restored["SystemDefault"] as? [String: String])?["Type"] == "original", "Restore must recover the previous wallpaper")
+var userChanged = selected
+userChanged["SystemDefault"] = ["Type": "user-selected-photo"]
+let preserved = AerialConfiguration.restoring(before, in: userChanged, slotID: slot)
+expect((preserved["SystemDefault"] as? [String: String])?["Type"] == "user-selected-photo", "Restore must preserve later user choices")
+do {
+    _ = try AerialConfiguration.selecting("../invalid", in: before)
+    fatalError("Invalid asset IDs must be rejected")
+} catch {}
+print("Native aerial selection and selective restore tests passed")

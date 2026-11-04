@@ -31,6 +31,7 @@ enum VideoImporter {
     static func prepare(source: URL) async throws -> PreparedVideo {
         guard source.pathExtension.lowercased() == "mp4" else { throw VideoImportError.noVideo }
         let asset = AVURLAsset(url: source)
+        defer { asset.cancelLoading() }
         guard try await asset.load(.isPlayable),
               let track = try await asset.loadTracks(withMediaType: .video).first else {
             throw VideoImportError.noVideo
@@ -50,6 +51,7 @@ enum VideoImporter {
             let videoURL = directory.appendingPathComponent("Wallpaper.mp4")
             try await exporter.export(to: videoURL, as: .mp4)
             let generator = AVAssetImageGenerator(asset: AVURLAsset(url: videoURL))
+            defer { generator.cancelAllCGImageGeneration() }
             generator.appliesPreferredTrackTransform = true
             generator.maximumSize = CGSize(width: 1920, height: 1920)
             let generated = try await generator.image(at: .zero)

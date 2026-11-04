@@ -1,4 +1,5 @@
 import AppKit
+import Darwin
 
 private final class WallpaperWindow: NSWindow {
     override var canBecomeKey: Bool { false }
@@ -6,10 +7,17 @@ private final class WallpaperWindow: NSWindow {
 }
 
 final class DesktopController {
-    private struct Surface {
+    private final class Surface {
         let window: NSWindow
         let video: LoopingVideoView
         let screenID: String
+        var resumeSeconds: Double = 0
+
+        init(window: NSWindow, video: LoopingVideoView, screenID: String) {
+            self.window = window
+            self.video = video
+            self.screenID = screenID
+        }
     }
 
     private var surfaces: [Surface] = []
@@ -18,12 +26,14 @@ final class DesktopController {
     private var displayUpdate: DispatchWorkItem?
     private var visibilityTimer: Timer?
     private var coveredScreens = Set<String>()
+    private var memoryRelease: DispatchWorkItem?
     private var policy = PlaybackPolicy()
     private var settings: WallpaperSettings
     var onStateChange: (() -> Void)?
 
     init(settings: WallpaperSettings) {
         self.settings = settings
+        policy.sessionInactive = SessionState.isLocked
         policy.lowPowerMode = settings.pauseInLowPowerMode && ProcessInfo.processInfo.isLowPowerModeEnabled
         observe(NSWorkspace.willSleepNotification) { $0.policy.screenSleeping = true }
         observe(NSWorkspace.screensDidSleepNotification) { $0.policy.screenSleeping = true }
@@ -126,18 +136,32 @@ final class DesktopController {
     }
 
     private func applyPolicy() {
-        let shouldUnload = policy.sessionInactive || policy.screenSleeping || policy.screenSaverActive
+        let shouldUnload = !policy.shouldPlay
+        var releasedResources = false
         for surface in surfaces {
             let visible = isVisible(surface)
-            if shouldUnload {
-                surface.video.unload()
+            if shouldUnload || !visible {
+                if let player = surface.video.player {
+                    let time = player.currentTime().seconds
+                    if time.isFinite { surface.resumeSeconds = time }
+                    surface.video.unload()
+                    releasedResources = true
+                }
             } else {
                 if surface.video.player == nil && visible {
                     surface.video.setPlaying(false)
-                    surface.video.load(url: URL(fileURLWithPath: settings.mediaPath))
+                    surface.video.load(url: URL(fileURLWithPath: settings.mediaPath), resumeAt: surface.resumeSeconds)
                 }
                 surface.video.setPlaying(policy.shouldPlay && visible)
             }
+        }
+        if releasedResources {
+            memoryRelease?.cancel()
+            // AVFoundation finishes teardown asynchronously. Return unused allocator pages
+            // after that drain, rather than retaining decoder allocations while hidden.
+            let release = DispatchWorkItem { malloc_zone_pressure_relief(nil, 0) }
+            memoryRelease = release
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: release)
         }
         onStateChange?()
     }
@@ -200,7 +224,7 @@ final class DesktopController {
             "timestamp": ISO8601DateFormatter().string(from: Date()),
             "displays": surfaces.map { surface -> [String: Any] in
                 let player = surface.video.player
-                let time = player?.currentTime().seconds ?? 0
+                let time = player?.currentTime().seconds ?? surface.resumeSeconds
                 return [
                     "id": surface.screenID,
                     "rate": player?.rate ?? 0,
@@ -219,6 +243,7 @@ final class DesktopController {
     deinit {
         displayUpdate?.cancel()
         visibilityTimer?.invalidate()
+        memoryRelease?.cancel()
         for (center, token) in observers { center.removeObserver(token) }
         for token in distributedObservers { DistributedNotificationCenter.default().removeObserver(token) }
     }

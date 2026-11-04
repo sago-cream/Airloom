@@ -2,7 +2,8 @@ import AppKit
 
 let arguments = CommandLine.arguments
 let commands = ["--pause": "pause", "--resume": "resume", "--snapshot": "snapshot", "--quit": "quit",
-                "--continuous-playback": "continuous", "--efficient-playback": "efficient"]
+                "--continuous-playback": "continuous", "--efficient-playback": "efficient",
+                "--enable-lock-screen": "lock-screen-on", "--disable-lock-screen": "lock-screen-off"]
 let existing = NSRunningApplication.runningApplications(withBundleIdentifier: WallpaperSettings.bundleID)
     .contains { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
 if existing {

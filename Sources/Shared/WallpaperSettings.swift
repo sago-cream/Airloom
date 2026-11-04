@@ -13,6 +13,7 @@ struct WallpaperSettings: Codable {
     var title: String
     var posterPath: String? = nil
     var pauseWhenCovered: Bool? = true
+    var lockScreenSlotID: String? = nil
     var pauseInLowPowerMode = true
     var previousDesktopImages: [String: String] = [:]
 

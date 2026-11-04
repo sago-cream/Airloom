@@ -3,6 +3,7 @@ import AppKit
 enum DesktopImageManager {
     /// Keep a matching still behind the video and on the system's password-entry surface.
     static func applyPoster(settings: inout WallpaperSettings) throws {
+        guard settings.lockScreenSlotID == nil else { return }
         let poster = settings.posterPath.map { URL(fileURLWithPath: $0) } ?? WallpaperSettings.posterURL
         guard FileManager.default.isReadableFile(atPath: poster.path) else { return }
         for screen in NSScreen.screens {

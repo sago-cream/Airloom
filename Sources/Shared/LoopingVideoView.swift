@@ -10,6 +10,8 @@ final class LoopingVideoView: NSView {
     private(set) var failure: String?
     var onFailure: (() -> Void)?
     private var wantsPlayback = true
+    private var resumeTarget: CMTime?
+    private var seeking = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -20,8 +22,9 @@ final class LoopingVideoView: NSView {
 
     required init?(coder: NSCoder) { nil }
 
-    func load(url: URL) {
+    func load(url: URL, resumeAt seconds: Double = 0) {
         unload()
+        if seconds.isFinite, seconds > 0 { resumeTarget = CMTime(seconds: seconds, preferredTimescale: 600) }
         let item = AVPlayerItem(url: url)
         item.preferredForwardBufferDuration = 1
         let queue = AVQueuePlayer()
@@ -40,19 +43,36 @@ final class LoopingVideoView: NSView {
         looper = AVPlayerLooper(player: queue, templateItem: item)
         // Observe a real queue item: AVPlayerLooper plays replicas of the template.
         itemObservation = queue.observe(\.currentItem?.status, options: [.new]) { [weak self] queue, _ in
-            guard queue.currentItem?.status == .failed else { return }
-            let message = queue.currentItem?.error?.localizedDescription ?? "Video playback failed."
             DispatchQueue.main.async {
-                self?.failure = message
-                self?.onFailure?()
+                guard let self, self.player === queue else { return }
+                if queue.currentItem?.status == .failed {
+                    self.failure = queue.currentItem?.error?.localizedDescription ?? "Video playback failed."
+                    self.onFailure?()
+                } else { self.restorePositionIfReady() }
             }
         }
-        if wantsPlayback { queue.play() }
+        if wantsPlayback, resumeTarget == nil { queue.play() }
     }
 
     func setPlaying(_ playing: Bool) {
         wantsPlayback = playing
-        if playing { player?.play() } else { player?.pause() }
+        if playing {
+            restorePositionIfReady()
+            if resumeTarget == nil, !seeking { player?.play() }
+        } else { player?.pause() }
+    }
+
+    private func restorePositionIfReady() {
+        guard let target = resumeTarget, let player, player.currentItem?.status == .readyToPlay else { return }
+        resumeTarget = nil
+        seeking = true
+        player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self, weak player] _ in
+            DispatchQueue.main.async {
+                guard let self, let player, self.player === player else { return }
+                self.seeking = false
+                if self.wantsPlayback { player.play() }
+            }
+        }
     }
 
     func unload() {
@@ -66,6 +86,8 @@ final class LoopingVideoView: NSView {
         playerLayer?.removeFromSuperlayer()
         playerLayer = nil
         player = nil
+        resumeTarget = nil
+        seeking = false
         failure = nil
     }
 
