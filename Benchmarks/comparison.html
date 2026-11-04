@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{color-scheme:dark;--foreground:#eee;--muted-foreground:#aaa;--card:#242428;--border:#45454b;--chart-1:#78c5a5;--chart-2:#a99af5;--radius:12px;--font-sans:system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;background:transparent;font-family:var(--font-sans);color:var(--foreground)}
+main{display:grid;gap:16px}section{background:var(--card);border-radius:var(--radius);padding:16px}
+h2{font-size:15px;font-weight:600;margin:0 0 18px}p{font-size:12px;color:var(--muted-foreground);line-height:1.5;margin:14px 0 0}
+.row{display:grid;grid-template-columns:140px minmax(24px,1fr) 70px;gap:12px;align-items:center;margin:12px 0;font-size:13px}
+.track{height:20px;background:color-mix(in srgb,var(--border) 40%,transparent);border-radius:3px;overflow:hidden}
+.bar{height:20px;min-width:2px;border-radius:3px}strong{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.note{padding:0;margin:0;font-size:12px;color:var(--muted-foreground)}
+@media(max-width:440px){.row{grid-template-columns:105px minmax(18px,1fr) 62px;gap:8px;font-size:12px}}
+</style><main><section><h2>CPU · desktop covered</h2><div class="row"><span>Dynamic Wallpaper</span><div class="track"><div class="bar"
+            style="width:95.2381%;background:var(--chart-2)"></div></div>
+            <strong>2.353%</strong></div><div class="row"><span>Torii</span><div class="track"><div class="bar"
+            style="width:1.8155%;background:var(--chart-1)"></div></div>
+            <strong>0.045%</strong></div><p>52.5× less app CPU. Same maximized normal window; 61-second samples. Torii pauses hidden video automatically.</p></section><section><h2>CPU · continuous video playback</h2><div class="row"><span>Dynamic Wallpaper</span><div class="track"><div class="bar"
+            style="width:95.2381%;background:var(--chart-2)"></div></div>
+            <strong>2.432%</strong></div><div class="row"><span>Torii</span><div class="track"><div class="bar"
+            style="width:94.0044%;background:var(--chart-1)"></div></div>
+            <strong>2.400%</strong></div><p>Similar CPU use. Same original 1080p / 24 fps video; 92-second samples. Torii’s covered-desktop pause disabled for this comparison.</p></section><p class="note">Mean CPU as a percentage of one core, measured on this Mac. App process trees only; GPU and shared system-service work excluded. These tests do not establish a 4× gain during visible playback or long-term memory stability.</p></main></html>

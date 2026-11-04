@@ -1,0 +1,331 @@
+{
+  "label": "Torii \u2014 continuous original 1080p/24 playback, coverage pause disabled",
+  "timestamp": "2026-11-04T18:07:44.949022+00:00",
+  "pid": 92620,
+  "duration_s": 91.692,
+  "cpu_timebase": {
+    "numer": 125,
+    "denom": 3
+  },
+  "cpu_mean_percent": 2.4002772532224297,
+  "cpu_median_percent": 2.3163893189560434,
+  "footprint_mean_mib": 25.437933010525175,
+  "footprint_peak_mib": 26.15705108642578,
+  "samples": [
+    {
+      "elapsed_s": 2.026,
+      "cpu_percent": 2.235737665562512,
+      "footprint_mib": 25.328903198242188,
+      "resident_mib": 69.03125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 4.07,
+      "cpu_percent": 2.51367524183224,
+      "footprint_mib": 25.453903198242188,
+      "resident_mib": 69.15625,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 6.112,
+      "cpu_percent": 2.634756701448407,
+      "footprint_mib": 25.375778198242188,
+      "resident_mib": 69.078125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 8.138,
+      "cpu_percent": 3.5961976293147804,
+      "footprint_mib": 25.953903198242188,
+      "resident_mib": 70.09375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 10.175,
+      "cpu_percent": 2.455106266362457,
+      "footprint_mib": 25.828903198242188,
+      "resident_mib": 69.890625,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 12.194,
+      "cpu_percent": 1.7717504816857619,
+      "footprint_mib": 25.157028198242188,
+      "resident_mib": 64.453125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 14.232,
+      "cpu_percent": 2.044176018355828,
+      "footprint_mib": 25.250778198242188,
+      "resident_mib": 64.53125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 16.27,
+      "cpu_percent": 2.452050242906146,
+      "footprint_mib": 25.250778198242188,
+      "resident_mib": 64.53125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 18.313,
+      "cpu_percent": 2.5636642212980956,
+      "footprint_mib": 26.00080108642578,
+      "resident_mib": 65.296875,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 20.356,
+      "cpu_percent": 2.305292233432685,
+      "footprint_mib": 25.110153198242188,
+      "resident_mib": 64.421875,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 22.401,
+      "cpu_percent": 2.5686018679781175,
+      "footprint_mib": 25.110153198242188,
+      "resident_mib": 64.421875,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 24.444,
+      "cpu_percent": 2.4485384557626744,
+      "footprint_mib": 25.282028198242188,
+      "resident_mib": 64.59375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 26.482,
+      "cpu_percent": 2.299672668811044,
+      "footprint_mib": 25.172653198242188,
+      "resident_mib": 64.484375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 28.512,
+      "cpu_percent": 1.9308777689974257,
+      "footprint_mib": 25.610153198242188,
+      "resident_mib": 64.921875,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 30.557,
+      "cpu_percent": 2.4377312872578134,
+      "footprint_mib": 25.344528198242188,
+      "resident_mib": 64.65625,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 32.597,
+      "cpu_percent": 2.094283037541861,
+      "footprint_mib": 25.344528198242188,
+      "resident_mib": 64.65625,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 34.638,
+      "cpu_percent": 2.121776784472133,
+      "footprint_mib": 25.282028198242188,
+      "resident_mib": 64.59375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 36.674,
+      "cpu_percent": 2.0379731482369325,
+      "footprint_mib": 25.282028198242188,
+      "resident_mib": 64.59375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 38.717,
+      "cpu_percent": 1.9825215743352842,
+      "footprint_mib": 26.15705108642578,
+      "resident_mib": 65.453125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 40.764,
+      "cpu_percent": 1.9766375817735313,
+      "footprint_mib": 25.141403198242188,
+      "resident_mib": 64.453125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 42.797,
+      "cpu_percent": 2.1424192645033147,
+      "footprint_mib": 25.141403198242188,
+      "resident_mib": 64.453125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 44.837,
+      "cpu_percent": 2.366542758314533,
+      "footprint_mib": 25.188278198242188,
+      "resident_mib": 64.5,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 46.867,
+      "cpu_percent": 2.896998015713546,
+      "footprint_mib": 26.094528198242188,
+      "resident_mib": 65.453125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 48.907,
+      "cpu_percent": 2.788342749581161,
+      "footprint_mib": 26.14142608642578,
+      "resident_mib": 65.5,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 50.949,
+      "cpu_percent": 2.2837275767685052,
+      "footprint_mib": 25.610153198242188,
+      "resident_mib": 64.984375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 52.992,
+      "cpu_percent": 2.1002196057975917,
+      "footprint_mib": 25.328903198242188,
+      "resident_mib": 64.703125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 55.027,
+      "cpu_percent": 2.091804793474061,
+      "footprint_mib": 25.360153198242188,
+      "resident_mib": 64.734375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 57.072,
+      "cpu_percent": 2.4373626886464836,
+      "footprint_mib": 25.360153198242188,
+      "resident_mib": 64.734375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 59.109,
+      "cpu_percent": 2.0573377139213096,
+      "footprint_mib": 25.344528198242188,
+      "resident_mib": 64.71875,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 61.151,
+      "cpu_percent": 2.0158898036538457,
+      "footprint_mib": 25.141403198242188,
+      "resident_mib": 64.515625,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 63.17,
+      "cpu_percent": 2.260841071665574,
+      "footprint_mib": 25.219528198242188,
+      "resident_mib": 64.59375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 65.217,
+      "cpu_percent": 1.9422736888248608,
+      "footprint_mib": 25.203903198242188,
+      "resident_mib": 64.53125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 67.255,
+      "cpu_percent": 1.9476186004868123,
+      "footprint_mib": 25.203903198242188,
+      "resident_mib": 64.484375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 69.298,
+      "cpu_percent": 2.3425503365294778,
+      "footprint_mib": 25.735153198242188,
+      "resident_mib": 65.015625,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 71.325,
+      "cpu_percent": 2.2278242967901214,
+      "footprint_mib": 25.391403198242188,
+      "resident_mib": 64.671875,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 73.364,
+      "cpu_percent": 2.3901636651495606,
+      "footprint_mib": 25.250778198242188,
+      "resident_mib": 64.53125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 75.383,
+      "cpu_percent": 2.3163893189560434,
+      "footprint_mib": 25.313278198242188,
+      "resident_mib": 64.59375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 77.426,
+      "cpu_percent": 2.799743847299343,
+      "footprint_mib": 25.375778198242188,
+      "resident_mib": 64.65625,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 79.461,
+      "cpu_percent": 2.680457589751836,
+      "footprint_mib": 25.328903198242188,
+      "resident_mib": 64.609375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 81.502,
+      "cpu_percent": 2.9399919621713675,
+      "footprint_mib": 25.172653198242188,
+      "resident_mib": 64.453125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 83.537,
+      "cpu_percent": 2.7288277156034937,
+      "footprint_mib": 25.250778198242188,
+      "resident_mib": 64.53125,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 85.581,
+      "cpu_percent": 2.6851489702682967,
+      "footprint_mib": 25.328903198242188,
+      "resident_mib": 64.609375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 87.624,
+      "cpu_percent": 3.366917168873048,
+      "footprint_mib": 26.125778198242188,
+      "resident_mib": 65.421875,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 89.649,
+      "cpu_percent": 3.4686073695329176,
+      "footprint_mib": 26.06330108642578,
+      "resident_mib": 65.34375,
+      "processes": 1
+    },
+    {
+      "elapsed_s": 91.692,
+      "cpu_percent": 2.2634549453665085,
+      "footprint_mib": 25.594528198242188,
+      "resident_mib": 64.890625,
+      "processes": 1
+    }
+  ]
+}

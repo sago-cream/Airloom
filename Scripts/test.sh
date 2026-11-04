@@ -12,4 +12,8 @@ if [[ "${1:-}" == "--import" ]]; then
     Sources/Shared/WallpaperSettings.swift Sources/App/VideoImporter.swift Tests/Import/main.swift \
     -framework AppKit -framework AVFoundation -o build/tests/import
   build/tests/import "${2:-$HOME/Documents/wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4}"
+elif [[ "${1:-}" == "--screen-saver" ]]; then
+  xcrun swiftc -O -swift-version 5 Tests/ScreenSaver/main.swift \
+    -framework AppKit -framework AVFoundation -framework ScreenSaver -o build/tests/screen-saver
+  build/tests/screen-saver
 fi

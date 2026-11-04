@@ -1,0 +1,23 @@
+{
+  "covered_cpu_ratio": 52.457627642248895,
+  "covered": {
+    "dynamic_cpu_percent": 2.353166064669605,
+    "torii_cpu_percent": 0.0448584156477253
+  },
+  "continuous": {
+    "dynamic_cpu_percent": 2.4317777465161106,
+    "torii_cpu_percent": 2.4002772532224297,
+    "torii_mean_footprint_mib": 25.437933010525175
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 24,
+    "encoded_video_sha256": "6597e6ccdcb5372e7343569a14e905d3a34d1ffda191a2b482c2d861c32c31b9"
+  },
+  "limitations": [
+    "App CPU only, not total system energy",
+    "No 4x gain in continuous playback",
+    "Short runs cannot establish multi-day memory stability"
+  ]
+}

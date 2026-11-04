@@ -43,13 +43,17 @@ The menu-bar app and screen saver have separate lifecycles. Desktop decoding sto
 # Keep part of the desktop visible for the live playback test.
 python3 Scripts/check-playback.py --seconds 90
 
+# Exercise native import or the installed screen-saver bundle.
+zsh Scripts/test.sh --import
+zsh Scripts/test.sh --screen-saver
+
 # Sample CPU time and physical footprint for a PID and its descendants.
 python3 Scripts/measure.py PID --seconds 90 --label 'Visible playback' --output Benchmarks/run.json
 ```
 
 CPU is reported as a percentage of one core, using Mach CPU-time counters converted with the host's timebase. Physical footprint and resident memory are distinct metrics. Measurements cover the selected process tree, not GPU work or unrelated system-service CPU. Compare identical visibility, video, display, and power settings. The source video's encoded packets can be compared using FFmpeg's `-map 0:v:0 -c copy -f hash -hash sha256 -` output.
 
-A fresh Dynamic Wallpaper run and its previously observed 19-day, roughly 24 GB state are different baselines. A large reduction against that accumulated footprint does not establish the same speedup against healthy fresh playback. Benchmark results must identify the workload and baseline.
+A restarted Dynamic Wallpaper run and its previously observed 19-day, roughly 24 GB state are different baselines. A large reduction against that accumulated footprint does not establish the same speedup against healthy playback. See [the recorded measurements](Benchmarks/README.md) for the matched comparison and its limits.
 
 ## Command line
 
