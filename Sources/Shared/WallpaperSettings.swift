@@ -12,6 +12,7 @@ struct WallpaperSettings: Codable {
     var mediaPath: String
     var title: String
     var posterPath: String? = nil
+    var pauseWhenCovered: Bool? = true
     var pauseInLowPowerMode = true
     var previousDesktopImages: [String: String] = [:]
 

@@ -3,7 +3,7 @@ set -euo pipefail
 cd "${0:A:h:h}"
 
 mkdir -p build/Torii.app/Contents/{MacOS,Resources} build/Torii.saver/Contents/{MacOS,Resources}
-common=(Sources/Shared/PlaybackPolicy.swift Sources/Shared/WallpaperSettings.swift Sources/Shared/LoopingVideoView.swift)
+common=(Sources/Shared/*.swift)
 flags=(-O -whole-module-optimization -swift-version 5 -target arm64-apple-macos15.0)
 
 xcrun swiftc "${flags[@]}" "${common[@]}" Sources/App/*.swift \

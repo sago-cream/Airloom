@@ -8,6 +8,7 @@ final class LoopingVideoView: NSView {
     private var playerLayer: AVPlayerLayer?
     private var itemObservation: NSKeyValueObservation?
     private(set) var failure: String?
+    var onFailure: (() -> Void)?
     private var wantsPlayback = true
 
     override init(frame frameRect: NSRect) {
@@ -39,7 +40,10 @@ final class LoopingVideoView: NSView {
         itemObservation = queue.observe(\.currentItem?.status, options: [.new]) { [weak self] queue, _ in
             guard queue.currentItem?.status == .failed else { return }
             let message = queue.currentItem?.error?.localizedDescription ?? "Video playback failed."
-            DispatchQueue.main.async { self?.failure = message }
+            DispatchQueue.main.async {
+                self?.failure = message
+                self?.onFailure?()
+            }
         }
         if wantsPlayback { queue.play() }
     }

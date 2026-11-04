@@ -12,15 +12,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var settings: WallpaperSettings?
     private var importing = false
     private var importButton: NSButton?
+    private var coverageCheckbox: NSButton?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        guard let loaded = try? WallpaperSettings.load(),
+        guard var loaded = try? WallpaperSettings.load(),
               FileManager.default.isReadableFile(atPath: loaded.mediaPath) else {
             showError("No wallpaper is installed. Run Scripts/install.sh with a video file, then reopen Torii.")
             NSApp.terminate(nil)
             return
         }
+        do { try DesktopImageManager.applyPoster(settings: &loaded) }
+        catch { NSLog("Torii: could not set the matching lock-screen still: %@", error.localizedDescription) }
         settings = loaded
         controller = DesktopController(settings: loaded)
         controller?.onStateChange = { [weak self] in self?.updateState() }
@@ -39,6 +42,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case "show": self.showDetails()
             case "snapshot": self.writeDiagnostics()
             case "quit": NSApp.terminate(nil)
+            case "continuous": self.setCoveragePause(false)
+            case "efficient": self.setCoveragePause(true)
             default: break
             }
         }
@@ -75,6 +80,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         controller?.setPaused(!(controller?.userPaused ?? false))
     }
 
+    @objc private func toggleCoveragePause(_ sender: NSButton) {
+        setCoveragePause(sender.state == .on)
+    }
+
+    private func setCoveragePause(_ enabled: Bool) {
+        guard var settings else { return }
+        settings.pauseWhenCovered = enabled
+        do {
+            try settings.save()
+            self.settings = settings
+            controller?.update(settings: settings)
+            coverageCheckbox?.state = enabled ? .on : .off
+        } catch { showError(error.localizedDescription) }
+    }
+
     @objc private func importVideo() {
         guard !importing else { return }
         let panel = NSOpenPanel()
@@ -96,16 +116,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         stateLabel?.stringValue = "Importing…"
         Task { @MainActor [weak self] in
             guard let self else { return }
+            var preparedImport: PreparedVideo?
             do {
                 let prepared = try await VideoImporter.prepare(source: source)
-                let updated = try VideoImporter.activate(prepared, previous: previous)
+                preparedImport = prepared
+                var updated = try VideoImporter.activate(prepared, previous: previous)
+                preparedImport = nil
+                do { try DesktopImageManager.applyPoster(settings: &updated) }
+                catch { NSLog("Torii: could not update the matching still: %@", error.localizedDescription) }
                 self.settings = updated
                 self.controller?.update(settings: updated)
                 self.detailsWindow?.close()
                 self.detailsWindow = nil
                 self.showDetails()
                 VideoImporter.removePreviousMedia(previous, keeping: updated)
-            } catch { self.showError(error.localizedDescription) }
+            } catch {
+                if let preparedImport { try? FileManager.default.removeItem(at: preparedImport.directory) }
+                self.showError(error.localizedDescription)
+            }
             self.importing = false
             self.importButton?.isEnabled = true
             self.updateState()
@@ -149,7 +177,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
         window.center()
-        let root = NSView()
+        let root = NSView(frame: NSRect(x: 0, y: 0, width: 560, height: 470))
         window.contentView = root
         let stack = NSStackView()
         stack.orientation = .vertical
@@ -165,6 +193,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let poster = NSImageView()
         poster.image = NSImage(contentsOf: settings?.posterPath.map { URL(fileURLWithPath: $0) } ?? WallpaperSettings.posterURL)
         poster.imageScaling = .scaleProportionallyUpOrDown
+        poster.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        poster.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         poster.wantsLayer = true
         poster.layer?.cornerRadius = 10
         poster.layer?.masksToBounds = true
@@ -172,7 +202,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         stack.addArrangedSubview(poster)
         poster.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         poster.heightAnchor.constraint(equalToConstant: 245).isActive = true
-        let heading = NSTextField(labelWithString: settings?.title ?? "Torii")
+        let heading = NSTextField(labelWithString: displayTitle)
         heading.font = .systemFont(ofSize: 20, weight: .semibold)
         heading.lineBreakMode = .byTruncatingMiddle
         heading.maximumNumberOfLines = 1
@@ -199,10 +229,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         saver.bezelStyle = .rounded
         controls.addArrangedSubview(saver)
         stack.addArrangedSubview(controls)
+        let coverage = NSButton(checkboxWithTitle: "Pause when the desktop is covered", target: self,
+                                action: #selector(toggleCoveragePause(_:)))
+        coverage.state = settings?.pauseWhenCovered == false ? .off : .on
+        coverageCheckbox = coverage
+        stack.addArrangedSubview(coverage)
         detailsWindow = window
         updateState()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private var displayTitle: String {
+        guard let title = settings?.title else { return "Torii" }
+        return title.replacingOccurrences(of: "mylivewallpapers.com-", with: "")
+            .replacingOccurrences(of: "-", with: " ")
     }
 
     private func updateState() {
