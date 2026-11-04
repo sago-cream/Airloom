@@ -14,7 +14,8 @@ final class LoopingVideoView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
-        layer?.backgroundColor = NSColor.black.cgColor
+        // The desktop's matching system wallpaper stays visible before decoding starts.
+        layer?.backgroundColor = NSColor.clear.cgColor
     }
 
     required init?(coder: NSCoder) { nil }
@@ -30,6 +31,7 @@ final class LoopingVideoView: NSView {
         queue.automaticallyWaitsToMinimizeStalling = false
         let videoLayer = AVPlayerLayer(player: queue)
         videoLayer.videoGravity = .resizeAspectFill
+        videoLayer.isOpaque = true
         videoLayer.frame = bounds
         videoLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
         layer?.addSublayer(videoLayer)

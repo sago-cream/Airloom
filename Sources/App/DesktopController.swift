@@ -110,8 +110,8 @@ final class DesktopController {
             window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)) + 1)
             window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
             window.ignoresMouseEvents = true
-            window.isOpaque = true
-            window.backgroundColor = .black
+            window.isOpaque = false
+            window.backgroundColor = .clear
             window.hasShadow = false
             window.isExcludedFromWindowsMenu = true
             window.title = "Torii Wallpaper"
