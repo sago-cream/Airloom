@@ -117,7 +117,9 @@ Task { @MainActor in
             let sleeping = desktop.diagnostics()["displays"] as! [[String: Any]]
             precondition(sleeping.allSatisfy { ($0["rate"] as? Float) == 0 && $0["presented"] as? Bool == true },
                          "Sleep must retain a sharp paused frame without playback")
-            NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+            if cycle == 1 {
+                NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+            }
             NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
             let returned = desktop.diagnostics()
             let displays = returned["displays"] as! [[String: Any]]
@@ -126,6 +128,13 @@ Task { @MainActor in
             precondition(displays.allSatisfy { ($0["rate"] as? Float) == 1 && $0["prepared"] as? Bool == true && $0["placeholder"] as? Bool == false },
                          "Unlock did not immediately continue the prepared player")
             precondition((returned["handoff"] as! [String: Any])["ready_before_unlock"] as? Bool == true)
+            precondition((returned["handoff"] as! [String: Any])["after_sleep"] as? Bool == true)
+            if cycle == 2 {
+                NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+                let lateWake = desktop.diagnostics()["displays"] as! [[String: Any]]
+                precondition(lateWake.allSatisfy { ($0["rate"] as? Float) == 1 && $0["prepared"] as? Bool == true },
+                             "A late display-wake event interrupted resumed playback")
+            }
             precondition(refreshes == cycle, "Native renderer refresh did not wait for warm desktop playback")
         }
         desktop.onHandoffReady = nil

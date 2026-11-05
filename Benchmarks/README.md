@@ -32,3 +32,5 @@ Native MP4-import tests verified rejection of non-MP4 input, audio removal, unch
 ```
 
 Raw measurements and playback snapshots are stored beside this file. Run `python3 Scripts/report.py` to regenerate the self-contained HTML chart and summary JSON.
+
+Real retained-player checks on this Mac covered lock/unlock with display off/on and the first unlock after Apple-menu system sleep. The power log confirmed entry into system sleep and wake from Deep Idle. Both checks kept the same player generation, reported playback prepared before unlock, and displayed no poster. The user reported perfect visuals in both cases. Compact evidence is saved in `live-warm-unlock-check.json` and `live-system-sleep-unlock-check.json`. These observations cover this Mac and display configuration.

@@ -6,8 +6,8 @@
       "rate" : 0
     },
     {
-      "expected_seconds" : 12.372291292063892,
-      "presented_seconds" : 12.370133333333333,
+      "expected_seconds" : 12.370263499906287,
+      "presented_seconds" : 12.370066666666666,
       "rate" : 1
     }
   ],

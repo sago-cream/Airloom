@@ -37,6 +37,7 @@ final class DesktopController {
     private var clockSample: Task<Void, Never>?
     private var unlockGraceUntil = Date.distantPast
     private var graceEnd: DispatchWorkItem?
+    private var sleptSinceUnlock = false
     var onHandoffReady: (() -> Void)?
     var onStateChange: (() -> Void)?
 
@@ -46,8 +47,8 @@ final class DesktopController {
         lockPlaybackActive = policy.sessionInactive && settings.lockScreenSlotID != nil
         nativeRefreshNeeded = lockPlaybackActive
         policy.lowPowerMode = settings.pauseInLowPowerMode && ProcessInfo.processInfo.isLowPowerModeEnabled
-        observe(NSWorkspace.willSleepNotification) { $0.policy.screenSleeping = true }
-        observe(NSWorkspace.screensDidSleepNotification) { $0.policy.screenSleeping = true }
+        observe(NSWorkspace.willSleepNotification) { $0.prepareForSleep() }
+        observe(NSWorkspace.screensDidSleepNotification) { $0.prepareForSleep() }
         observe(NSWorkspace.didWakeNotification) {
             $0.policy.screenSleeping = false
             if $0.policy.sessionInactive { $0.sampleNativeClock(after: 0.2) }
@@ -178,7 +179,18 @@ final class DesktopController {
         beginLockPlayback()
     }
 
+    private func prepareForSleep() {
+        policy.screenSleeping = true
+        sleptSinceUnlock = true
+        handoffGeneration += 1
+        clockSample?.cancel()
+        nativeClock = nil
+    }
+
     private func sessionReturned() {
+        // Authentication establishes an awake interactive session even if the display-wake
+        // notification is still queued. Keep manual pause and Low Power Mode independent.
+        policy.screenSleeping = false
         policy.sessionInactive = false
         finishLockPlayback()
     }
@@ -192,6 +204,8 @@ final class DesktopController {
         unlockGraceUntil = Date().addingTimeInterval(1)
         handoffDiagnostics["result"] = "warm_resume"
         handoffDiagnostics["ready_before_unlock"] = surfaces.allSatisfy { $0.video.prepared && $0.video.presented }
+        handoffDiagnostics["after_sleep"] = sleptSinceUnlock
+        sleptSinceUnlock = false
         graceEnd?.cancel()
         let end = DispatchWorkItem { [weak self] in
             self?.refreshCoverage()
@@ -315,6 +329,7 @@ final class DesktopController {
             "media": settings.mediaPath,
             "timestamp": ISO8601DateFormatter().string(from: Date()),
             "handoff": handoffDiagnostics,
+            "power": ["sleeping": policy.screenSleeping, "slept_since_unlock": sleptSinceUnlock],
             "native_clock_sample": nativeClock.map { ["media_seconds": $0.mediaSeconds, "host_seconds": $0.hostSeconds, "rate": $0.rate] } ?? [:],
             "displays": surfaces.map { surface -> [String: Any] in
                 let player = surface.video.player

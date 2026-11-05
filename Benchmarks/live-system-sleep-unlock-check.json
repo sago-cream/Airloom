@@ -1,0 +1,60 @@
+{
+  "full_system_sleep_observed": true,
+  "system_wake_observed": true,
+  "power_log_events": [
+    "2026-11-05 15:29:02 +0800 Notification        \tDisplay is turned off                                                      \t          ",
+    "2026-11-05 15:29:07 +0800 Sleep               \tEntering Sleep state due to 'Software Sleep pid=422':TCPKeepAlive=active Using Batt (Charge:84%) 26 secs   ",
+    "2026-11-05 15:29:32 +0800 Notification        \tDisplay is turned on                                                       \t          ",
+    "2026-11-05 15:29:33 +0800 Wake                \tWake from Deep Idle [CDNVA] : due to smc.sysState.Wake(0x70070000) pwrbtn SMC.OutboxNotEmpty/UserActivity Assertion Using BATT (Charge:84%)           "
+  ],
+  "after_sleep": true,
+  "ready_before_unlock": true,
+  "same_player_generation_throughout": true,
+  "poster_never_displayed": true,
+  "user_visual_observation": "worked perfectly",
+  "last_state": {
+    "displays": [
+      {
+        "error": "",
+        "id": "1",
+        "load_generation": 1,
+        "placeholder": false,
+        "prepared": true,
+        "presented": true,
+        "queue_items": 3,
+        "rate": 1,
+        "ready": true,
+        "time_seconds": 36.87109325,
+        "visible": true,
+        "window_frame": "{{0, 0}, {1710, 1107}}",
+        "window_level": -2147483622
+      }
+    ],
+    "handoff": {
+      "after_sleep": true,
+      "ready_before_unlock": true,
+      "result": "warm_resume"
+    },
+    "lock_screen": {
+      "busy": false,
+      "enabled": true,
+      "error": "",
+      "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
+    },
+    "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+    "menu": {
+      "outside_click_monitor": false,
+      "tracking": false
+    },
+    "native_clock_sample": {},
+    "power": {
+      "sleeping": false,
+      "slept_since_unlock": false
+    },
+    "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
+    "state": "Playing",
+    "timestamp": "2026-11-05T07:29:37Z",
+    "observed_wall_unix": 1793863777.429203
+  },
+  "scope": "Actual first unlock after Apple-menu system sleep on this Mac"
+}
