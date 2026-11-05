@@ -3,23 +3,22 @@ import ServiceManagement
 import UniformTypeIdentifiers
 import Darwin
 
-final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var controller: DesktopController?
     private var statusItem: NSStatusItem?
-    private let popover = NSPopover()
-    private var stateLabel: NSTextField?
-    private var pauseButton: NSButton?
+    private var stateItem: NSMenuItem?
+    private var pauseItem: NSMenuItem?
     private var commandObserver: NSObjectProtocol?
     private var settings: WallpaperSettings?
     private var importing = false
-    private var importButton: NSButton?
-    private var coverageCheckbox: NSButton?
-    private var lockScreenCheckbox: NSButton?
+    private var importItem: NSMenuItem?
+    private var coverageItem: NSMenuItem?
+    private var lockScreenItem: NSMenuItem?
     private var lockScreenBusy = false
     private var lockScreenError = ""
     private var sessionLocked = false
     private var lockObservers: [NSObjectProtocol] = []
-    private var loginCheckbox: NSButton?
+    private var loginItem: NSMenuItem?
     private var rendererRefresh: DispatchWorkItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -50,11 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = NSImage(systemSymbolName: "mountain.2", accessibilityDescription: "Torii wallpaper")
         item.button?.toolTip = "Torii — \(loaded.title)"
-        item.button?.target = self
-        item.button?.action = #selector(togglePanel)
-        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
-        popover.behavior = .transient
-        popover.delegate = self
+        item.menu = makeMenu()
         statusItem = item
         commandObserver = DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("com.hsi.Torii.command"), object: nil, queue: .main
@@ -63,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             switch notification.userInfo?["command"] as? String {
             case "pause": self.controller?.setPaused(true)
             case "resume": self.controller?.setPaused(false)
-            case "show": self.showPanel()
+            case "show": self.showMenu()
             case "snapshot": self.writeDiagnostics()
             case "quit": NSApp.terminate(nil)
             case "continuous": self.setCoveragePause(false)
@@ -77,19 +72,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         if loaded.lockScreenSlotID != nil, LockScreenInstaller.state()?.mediaPath != loaded.mediaPath {
             setLockScreen(true)
         }
-        if CommandLine.arguments.contains("--show") { showPanel() }
+        if CommandLine.arguments.contains("--show") { showMenu() }
     }
 
-    @objc private func togglePanel() {
-        if popover.isShown { popover.performClose(nil) } else { showPanel() }
+    private func makeMenu() -> NSMenu {
+        let menu = NSMenu()
+        menu.delegate = self
+        menu.autoenablesItems = false
+        func item(_ title: String, _ action: Selector? = nil, key: String = "") -> NSMenuItem {
+            let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+            item.target = self
+            menu.addItem(item)
+            return item
+        }
+        stateItem = item("Torii")
+        stateItem?.isEnabled = false
+        menu.addItem(.separator())
+        pauseItem = item("Pause Wallpaper", #selector(togglePause), key: "p")
+        importItem = item("Import Video…", #selector(importVideo), key: "o")
+        menu.addItem(.separator())
+        coverageItem = item("Pause When Desktop Is Covered", #selector(toggleCoveragePause))
+        lockScreenItem = item("Animate Lock Screen", #selector(toggleLockScreen))
+        loginItem = item("Start at Login", #selector(toggleLogin))
+        menu.addItem(.separator())
+        _ = item("Quit Torii", #selector(quit), key: "q")
+        return menu
+    }
+
+    func menuWillOpen(_ menu: NSMenu) { updateState() }
+    func menuDidClose(_ menu: NSMenu) { releaseTemporaryMemory() }
+
+    private func showMenu() {
+        updateState()
+        guard let button = statusItem?.button, let menu = statusItem?.menu else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.minY - 4), in: button)
     }
 
     @objc private func togglePause() {
         controller?.setPaused(!(controller?.userPaused ?? false))
     }
 
-    @objc private func toggleCoveragePause(_ sender: NSButton) {
-        setCoveragePause(sender.state == .on)
+    @objc private func toggleCoveragePause() {
+        setCoveragePause(settings?.pauseWhenCovered == false)
     }
 
     private func setCoveragePause(_ enabled: Bool) {
@@ -99,20 +124,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             try settings.save()
             self.settings = settings
             controller?.update(settings: settings)
-            coverageCheckbox?.state = enabled ? .on : .off
+            coverageItem?.state = enabled ? .on : .off
         } catch { showError(error.localizedDescription) }
     }
 
-    @objc private func toggleLockScreen(_ sender: NSButton) {
-        setLockScreen(sender.state == .on)
+    @objc private func toggleLockScreen() {
+        setLockScreen(settings?.lockScreenSlotID == nil)
     }
 
     private func setLockScreen(_ enabled: Bool) {
         guard !lockScreenBusy, !importing, var updated = settings else { return }
         lockScreenBusy = true
         lockScreenError = ""
-        lockScreenCheckbox?.isEnabled = false
-        stateLabel?.stringValue = "Preparing lock screen…"
+        lockScreenItem?.isEnabled = false
+        updateState()
         writeDiagnostics()
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -132,8 +157,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 self.showError(error.localizedDescription)
             }
             self.lockScreenBusy = false
-            self.lockScreenCheckbox?.isEnabled = true
-            self.lockScreenCheckbox?.state = self.settings?.lockScreenSlotID != nil ? .on : .off
+            self.lockScreenItem?.isEnabled = true
+            self.lockScreenItem?.state = self.settings?.lockScreenSlotID != nil ? .on : .off
             self.updateState()
             self.releaseTemporaryMemory()
         }
@@ -161,7 +186,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         panel.canChooseDirectories = false
         panel.directoryURL = settings.map { URL(fileURLWithPath: $0.sourcePath).deletingLastPathComponent() }
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Documents/wallpaper")
-        popover.performClose(nil)
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
         importSource(url)
@@ -170,8 +194,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private func importSource(_ source: URL) {
         guard !importing, let previous = settings else { return }
         importing = true
-        importButton?.isEnabled = false
-        stateLabel?.stringValue = "Importing…"
+        importItem?.isEnabled = false
+        updateState()
         Task { @MainActor [weak self] in
             guard let self else { return }
             var preparedImport: PreparedVideo?
@@ -189,16 +213,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 self.settings = updated
                 if updated.lockScreenSlotID != nil, !self.sessionLocked { LockScreenInstaller.reload(includeAgent: true) }
                 self.controller?.update(settings: updated)
-                self.showPanel()
                 VideoImporter.removePreviousMedia(previous, keeping: updated)
             } catch {
                 if let preparedImport { try? FileManager.default.removeItem(at: preparedImport.directory) }
                 self.showError(error.localizedDescription)
             }
             self.importing = false
-            self.importButton?.isEnabled = true
+            self.importItem?.isEnabled = true
             self.updateState()
             self.releaseTemporaryMemory()
+            DispatchQueue.main.async { self.showMenu() }
         }
     }
 
@@ -210,124 +234,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 try SMAppService.mainApp.register()
             }
         } catch { showError(error.localizedDescription) }
-        loginCheckbox?.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        loginItem?.state = SMAppService.mainApp.status == .enabled ? .on : .off
     }
 
     @objc private func quit() { NSApp.terminate(nil) }
-
-    private func showPanel() {
-        guard let button = statusItem?.button else { return }
-        if popover.isShown { updateState(); return }
-        let viewController = NSViewController()
-        let root = NSView(frame: NSRect(x: 0, y: 0, width: 348, height: 232))
-        viewController.view = root
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 12
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        root.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -16),
-            stack.topAnchor.constraint(equalTo: root.topAnchor, constant: 16),
-        ])
-        let caption = NSStackView()
-        caption.orientation = .vertical
-        caption.alignment = .leading
-        caption.spacing = 4
-        let heading = NSTextField(labelWithString: displayTitle)
-        heading.font = .systemFont(ofSize: 15, weight: .semibold)
-        heading.lineBreakMode = .byTruncatingMiddle
-        heading.maximumNumberOfLines = 1
-        heading.widthAnchor.constraint(lessThanOrEqualToConstant: 316).isActive = true
-        caption.addArrangedSubview(heading)
-        let state = NSTextField(labelWithString: controller?.state ?? "Starting")
-        state.font = .systemFont(ofSize: 12)
-        state.textColor = .secondaryLabelColor
-        stateLabel = state
-        caption.addArrangedSubview(state)
-        stack.addArrangedSubview(caption)
-        let controls = NSStackView()
-        controls.orientation = .horizontal
-        controls.spacing = 12
-        let pause = NSButton(title: "Pause", target: self, action: #selector(togglePause))
-        pause.bezelStyle = .rounded
-        pauseButton = pause
-        controls.addArrangedSubview(pause)
-        let importVideo = NSButton(title: "Import Video…", target: self, action: #selector(importVideo))
-        importVideo.bezelStyle = .rounded
-        importVideo.isEnabled = !importing
-        importButton = importVideo
-        controls.addArrangedSubview(importVideo)
-        stack.addArrangedSubview(controls)
-        let separator = NSBox()
-        separator.boxType = .separator
-        stack.addArrangedSubview(separator)
-        separator.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        let preferences = NSStackView()
-        preferences.orientation = .vertical
-        preferences.alignment = .leading
-        preferences.spacing = 7
-        let coverage = NSButton(checkboxWithTitle: "Pause when the desktop is covered", target: self,
-                                action: #selector(toggleCoveragePause(_:)))
-        coverage.state = settings?.pauseWhenCovered == false ? .off : .on
-        coverageCheckbox = coverage
-        preferences.addArrangedSubview(coverage)
-        let lockScreen = NSButton(checkboxWithTitle: "Animate lock screen", target: self, action: #selector(toggleLockScreen(_:)))
-        lockScreen.state = settings?.lockScreenSlotID != nil ? .on : .off
-        lockScreen.isEnabled = !lockScreenBusy
-        lockScreenCheckbox = lockScreen
-        preferences.addArrangedSubview(lockScreen)
-        let login = NSButton(checkboxWithTitle: "Start at login", target: self, action: #selector(toggleLogin))
-        login.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        loginCheckbox = login
-        preferences.addArrangedSubview(login)
-        stack.addArrangedSubview(preferences)
-        let footer = NSStackView()
-        footer.orientation = .horizontal
-        let spacer = NSView()
-        footer.addArrangedSubview(spacer)
-        let quit = NSButton(title: "Quit Torii", target: self, action: #selector(quit))
-        quit.isBordered = false
-        quit.font = .systemFont(ofSize: 12)
-        footer.addArrangedSubview(quit)
-        stack.addArrangedSubview(footer)
-        footer.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        popover.contentViewController = viewController
-        popover.contentSize = root.frame.size
-        updateState()
-        NSApp.activate(ignoringOtherApps: true)
-        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-    }
-
-    func popoverDidClose(_ notification: Notification) {
-        popover.contentViewController = nil
-        stateLabel = nil
-        pauseButton = nil
-        importButton = nil
-        coverageCheckbox = nil
-        lockScreenCheckbox = nil
-        loginCheckbox = nil
-        releaseTemporaryMemory()
-    }
 
     private func releaseTemporaryMemory() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { malloc_zone_pressure_relief(nil, 0) }
     }
 
-    private var displayTitle: String {
-        guard let title = settings?.title else { return "Torii" }
-        return title.replacingOccurrences(of: "mylivewallpapers.com-", with: "")
-            .replacingOccurrences(of: "-", with: " ")
-    }
-
     private func updateState() {
-        stateLabel?.stringValue = importing ? "Importing…" : lockScreenBusy ? "Preparing lock screen…" : controller?.state ?? "Starting"
-        importButton?.isEnabled = !importing && !lockScreenBusy
-        lockScreenCheckbox?.isEnabled = !importing && !lockScreenBusy
-        pauseButton?.title = controller?.userPaused == true ? "Resume" : "Pause"
+        let state = importing ? "Importing…" : lockScreenBusy ? "Preparing Lock Screen…" : controller?.state ?? "Starting"
+        stateItem?.title = "Torii — \(state)"
+        importItem?.isEnabled = !importing && !lockScreenBusy
+        lockScreenItem?.isEnabled = !importing && !lockScreenBusy
+        pauseItem?.title = controller?.userPaused == true ? "Resume Wallpaper" : "Pause Wallpaper"
+        coverageItem?.state = settings?.pauseWhenCovered == false ? .off : .on
+        lockScreenItem?.state = settings?.lockScreenSlotID != nil ? .on : .off
+        loginItem?.state = SMAppService.mainApp.status == .enabled ? .on : .off
         statusItem?.button?.appearsDisabled = controller?.userPaused == true
+        statusItem?.button?.toolTip = settings.map { "Torii — \($0.title)" }
         writeDiagnostics()
     }
 
@@ -351,7 +277,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         controller?.stop()
         rendererRefresh?.cancel()
-        popover.performClose(nil)
         for token in lockObservers { DistributedNotificationCenter.default().removeObserver(token) }
         if let commandObserver { DistributedNotificationCenter.default().removeObserver(commandObserver) }
     }

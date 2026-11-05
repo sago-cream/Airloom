@@ -4,7 +4,7 @@ A native, local-only macOS video wallpaper app with animated lock-screen backgro
 
 ## Use
 
-Open `~/Applications/Torii.app` and click the mountain icon. All controls live in that popover. **Import Video…** accepts your own MP4 and opens in the previous video's folder. It preserves the encoded video, removes audio, and updates the desktop and enabled lock-screen background. Original files are never modified.
+Open `~/Applications/Torii.app` and click the mountain icon. All controls live in a compact native menu. **Import Video…** accepts your own MP4 and opens in the previous video's folder. It preserves the encoded video, removes audio, and updates the desktop and enabled lock-screen background. Original files are never modified.
 
 **Pause** pauses manually. **Pause when the desktop is covered** controls automatic resource release. **Animate lock screen** enables native video playback on macOS 26+; turn it off to restore the previous movie and wallpaper selections. **Start at login** controls macOS login registration.
 
@@ -29,7 +29,7 @@ Installation saves the original screen-saver preference and wallpaper index unde
 - Each display has one player with a bounded `AVPlayerLooper` queue. Switching displays or videos tears down the previous players, items, observers, and layers.
 - Hidden and paused desktop players release their queues, layers, and decoder resources. Resuming reloads at the saved playback position. Native window-occlusion events are supplemented by a coalesced three-second check of public window geometry, without requesting Accessibility or Screen Recording access.
 - Locking the session, starting the system screen saver, and sleeping displays release desktop decoding resources. Waking and unlocking resume only after all pause conditions clear. Low Power Mode and manual pause are respected independently. Startup also checks the current session lock state.
-- A single controls-only popover releases its view hierarchy when closed. There is no preview or separate settings window.
+- A native menu holds the controls without loading a preview or a separate settings window.
 - A screen-saver bundle carries its own silent video so the system host does not need access to Documents. Import prepares and signs a replacement bundle before activating it.
 
 ## Lock screen
@@ -73,4 +73,4 @@ A restarted Dynamic Wallpaper run and its previously observed 19-day, roughly 24
 
 ## Command line
 
-The installed executable accepts `--show` (the same popover), `--pause`, `--resume`, `--snapshot`, and `--quit` while Torii is running. `--snapshot` writes real per-display playback and lock-screen configuration state to `~/Library/Application Support/Torii/status.json`. `--continuous-playback` disables the optional covered-desktop pause for measurements; `--efficient-playback` restores it. `--enable-lock-screen` and `--disable-lock-screen` use the same actions as the checkbox. There is no network listener or background telemetry.
+The installed executable accepts `--show` (the same menu), `--pause`, `--resume`, `--snapshot`, and `--quit` while Torii is running. `--snapshot` writes real per-display playback and lock-screen configuration state to `~/Library/Application Support/Torii/status.json`. `--continuous-playback` disables the optional covered-desktop pause for measurements; `--efficient-playback` restores it. `--enable-lock-screen` and `--disable-lock-screen` use the same actions as the checkbox. There is no network listener or background telemetry.
