@@ -1,0 +1,21 @@
+name: Check
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: maxim-lobanov/setup-xcode@1242409711ff5721add51979e9e11e23ebb7e5a4 # v1
+        with:
+          xcode-version: "26.6"
+      - run: swift package resolve
+      - run: zsh Scripts/test.sh
+      - run: UNIVERSAL=1 zsh Scripts/build.sh
+      - name: Check the distributable bundle
+        run: |
+          python3 Scripts/check-bundle.py build/Airloom.app
+          bash -n Scripts/release.sh
+          zsh -n Scripts/build.sh Scripts/install.sh Scripts/test.sh

@@ -1,76 +1,56 @@
-# Torii
+# Airloom
 
-A native, local-only macOS video wallpaper app with animated lock-screen backgrounds.
+Native video wallpapers and animated lock screens, controlled from a small macOS menu-bar menu.
 
 ## Use
 
-Open `~/Applications/Torii.app` and click the mountain icon. All controls live in a compact native menu. **Import Video…** accepts your own MP4 and opens in the previous video's folder. It preserves the encoded video, removes audio, and updates the desktop and enabled lock-screen background. Original files are never modified.
+Download Airloom from [Releases](https://github.com/sago-cream/Airloom/releases), move **Airloom.app** to Applications, and open it. Choose your own MP4 on first launch. No wallpaper video is included.
 
-**Pause** pauses manually. **Pause when the desktop is covered** controls automatic playback pausing. **Animate lock screen** enables native video playback on macOS 26+; turn it off to restore the previous movie and wallpaper selections. **Start at login** controls macOS login registration.
+Click the **wind** menu-bar icon for **Import Video…**, pause, automatic pausing when the desktop is covered, lock-screen animation, login startup, and **Check for Updates…**. Import preserves the encoded video and removes audio. Your original file stays unchanged. Wallpaper processing happens locally; Sparkle contacts GitHub to check for updates.
 
-## Build and install
+Desktop playback requires macOS 15 or later, on Apple Silicon or Intel. Native lock-screen animation requires macOS 26 or later and one downloaded aerial in **System Settings → Wallpaper**. Turn on **Animate Lock Screen** to use it; turn it off to restore the previous video and wallpaper selections. Authentication and FileVault remain controlled by macOS.
 
-Requires Apple Silicon, macOS 15+, Xcode command-line tools, and FFmpeg for the initial installer. The running app and its import picker use native frameworks and do not require FFmpeg.
+## Playback
+
+AVFoundation streams the video directly into a player layer, with one retained player per display and a bounded looping queue. Covered desktops, sleeping displays, Low Power Mode, and manual pause stop playback while keeping the last decoded frame ready.
+
+With lock-screen animation enabled, desktop playback can continue behind authentication while the display is awake. Airloom samples the native renderer's clock while locked and aligns the existing desktop player. Unlock does not create a new decoder or swap in a poster. Normal lock/unlock, display sleep, and the first unlock after full system sleep were visually checked on the development Mac. Different macOS and display configurations still need their own checks.
+
+The native lock-screen integration uses undocumented, user-owned macOS aerial files. Airloom replaces one downloaded aerial slot with a silent MOV containing at least ten minutes of repeated original video. It does not reduce resolution or frame rate. The system renderer can stop when that movie ends if the display stays awake longer. macOS updates or aerial downloads can reset the slot; re-enable the option to reapply it. System Settings retains the aerial's original catalog name and thumbnail. [Animated](https://github.com/vlzuiev/animated) and [MotionWallpaper](https://github.com/krol44/MotionWallpaper) use the same aerial-slot approach.
+
+Previous wallpaper selections and the original aerial are backed up in `~/Library/Application Support/Torii/Backups/LockScreen`. Disabling lock-screen animation restores the movie byte-for-byte and preserves later wallpaper selections that no longer use Airloom's slot.
+
+Airloom retains Torii's bundle identifier and Application Support directory so existing installations keep their imported wallpaper and settings. The bundled standalone screen saver is signed once; imported media lives outside signed code in Application Support.
+
+See [recorded measurements](Benchmarks/README.md) for CPU and memory comparisons and their limits. Results depend on the video, visibility, displays, power state, and which system services are counted.
+
+## Development
+
+Requires Xcode 26.6 and its command-line tools. Sparkle 2.10.0 is pinned through Swift Package Manager. FFmpeg is not needed to build, run, or import videos.
 
 ```sh
-zsh Scripts/build.sh
 zsh Scripts/test.sh
-zsh Scripts/install.sh /absolute/path/to/wallpaper.mp4
-open ~/Applications/Torii.app
+zsh Scripts/build.sh                 # current architecture, ad-hoc signature
+UNIVERSAL=1 zsh Scripts/build.sh     # Apple Silicon + Intel
+zsh Scripts/install.sh
+open ~/Applications/Airloom.app
 ```
 
-For native lock-screen animation on macOS 26+, download one aerial in **System Settings → Wallpaper**, then turn on **Animate lock screen** in Torii. The included `~/Library/Screen Savers/Torii.saver` is also available as a standalone video screen saver, including on macOS 15. Native lock-screen mode selects macOS's aerial renderer for both wallpaper and screen saver.
-
-Installation saves the original screen-saver preference and wallpaper index under `~/Library/Application Support/Torii/Backups`. Re-running the installer explicitly replaces the selected video with its supplied path. To upgrade the app while keeping an imported video, build and copy only `build/Torii.app` to `~/Applications/Torii.app` after quitting Torii.
-
-## Playback and resource use
-
-- AVFoundation streams the original video into an `AVPlayerLayer`. Continuous playback uses no application frame timer or frame copying.
-- Each display retains one player with a bounded `AVPlayerLooper` queue. Source and display changes tear down the old player; ordinary pause, coverage changes, sleep, and unlock reuse it.
-- Covered desktops, sleeping displays, Low Power Mode, and manual pause stop playback while retaining the original decoded frame. Retaining the queue uses more paused memory than unloading it, but avoids decoder cold starts and low-resolution still-image transitions. Native window-occlusion events are supplemented by a coalesced three-second check of public window geometry.
-- With native lock-screen animation enabled, the desktop player can play behind the protected lock screen while the display is awake. It pauses when the display sleeps and resumes before authentication finishes when wake time permits. Native timing is sampled and applied while locked; unlock performs no log query, player replacement, or poster swap. A short grace period keeps playback through the login-window fade before applying coverage rules.
-- A native menu holds the controls. Outside clicks and app deactivation explicitly cancel tracking, and the mouse monitor is removed when the menu closes.
-- A screen-saver bundle carries its own silent video so the system host does not need access to Documents. Import prepares and signs a replacement bundle before activating it.
-
-## Lock screen
-
-On macOS 26+, Torii uses the system's aerial-video pipeline for the actual logged-in session's lock-screen background. The native background was verified against the real `loginwindow` surface independently of desktop playback. Authentication stays with macOS. Pre-login and FileVault screens remain system-controlled.
-
-Torii prepares a video-only MOV by repeating the original encoded video to at least ten minutes, without reducing resolution or frame rate. macOS's aerial renderer does not loop indefinitely: the repeated file covers the configured display-sleep interval, then can stop at its end if the display is kept awake.
-
-During a lock, Torii reads the native renderer's media and monotonic host clock and aligns the existing desktop player while it is hidden behind authentication. Unlock continues that prepared player immediately. The system renderer is refreshed for the next lock only after desktop playback is prepared. Short-lived system-log queries run during lock preparation and wake, without a permanent helper. The timing format is undocumented; when unavailable, the desktop continues on its own clock. Normal unlock, display sleep, and the first unlock after full system sleep were verified on this Mac. Unlock also tolerates a display-wake notification arriving after authentication; other macOS/display configurations still need their own checks.
-
-The movie replaces one already-downloaded aerial slot under `~/Library/Application Support/com.apple.wallpaper/aerials/videos`. The previous movie and wallpaper configuration are saved under `~/Library/Application Support/Torii/Backups/LockScreen`. Restore recovers the movie byte-for-byte and preserves later wallpaper selections that no longer use Torii's slot. System Settings retains the original aerial's name and catalog thumbnail.
-
-This integration uses undocumented, user-owned macOS files. It needs no administrator privileges or changes to system security settings; macOS updates or aerial downloads can reset the slot. Re-enable the checkbox or import again to reapply it. [Animated](https://github.com/vlzuiev/animated) and [MotionWallpaper](https://github.com/krol44/MotionWallpaper) provide independent implementations of this aerial-slot approach.
-
-## Verify
+Quit an already-running copy before replacing it. The development installer preserves settings and media. Import installs the bundled screen saver at the legacy `~/Library/Screen Savers/Torii.saver` path.
 
 ```sh
-# Keep part of the desktop visible for the live playback test.
-python3 Scripts/check-playback.py --seconds 90
-
-# Exercise native import or the installed screen-saver bundle.
-zsh Scripts/test.sh --import
+zsh Scripts/test.sh --import /absolute/path/to/video.mp4
 zsh Scripts/test.sh --screen-saver
-
-# Check native lock-screen configuration and its reversible restore/reapply cycle.
-python3 Scripts/check-lock-screen.py --restore-cycle
-
-# Exercise retained play/pause cycles and complete decoder replacement.
-zsh Scripts/test.sh --memory
-
-# Check native clock parsing and a warm lock/sleep/unlock lifecycle.
 zsh Scripts/test.sh --timeline
-
-# Sample CPU time and physical footprint for a PID and its descendants.
-python3 Scripts/measure.py PID --seconds 90 --label 'Visible playback' --output Benchmarks/run.json
+zsh Scripts/test.sh --memory
+python3 Scripts/check-playback.py --seconds 90
+python3 Scripts/check-lock-screen.py --restore-cycle
 ```
 
-CPU is reported as a percentage of one core, using Mach CPU-time counters converted with the host's timebase. Physical footprint and resident memory are distinct metrics. Measurements cover the selected process tree, not GPU work or unrelated system-service CPU. Compare identical visibility, video, display, and power settings. The source video's encoded packets can be compared using FFmpeg's `-map 0:v:0 -c copy -f hash -hash sha256 -` output.
+The integration checks use the currently configured wallpaper. Keep the desktop visible for playback checks. The lock-screen restore check changes and then restores the native slot; it does not lock the Mac.
 
-A restarted Dynamic Wallpaper run and its previously observed 19-day, roughly 24 GB state are different baselines. A large reduction against that accumulated footprint does not establish the same speedup against healthy playback. See [the recorded measurements](Benchmarks/README.md) for the matched comparison and its limits.
+The executable supports `--show`, `--pause`, `--resume`, `--snapshot`, `--quit`, `--continuous-playback`, `--efficient-playback`, `--enable-lock-screen`, and `--disable-lock-screen`. `--snapshot` writes playback diagnostics to `~/Library/Application Support/Torii/status.json`. There is no network listener or telemetry.
 
-## Command line
+## Releases
 
-The installed executable accepts `--show` (the same menu), `--pause`, `--resume`, `--snapshot`, and `--quit` while Torii is running. `--snapshot` writes real per-display playback and lock-screen configuration state to `~/Library/Application Support/Torii/status.json`. `--continuous-playback` disables the optional covered-desktop pause for measurements; `--efficient-playback` restores it. `--enable-lock-screen` and `--disable-lock-screen` use the same actions as the checkbox. There is no network listener or background telemetry.
+[Release workflow and credential setup](Docs/Releasing.md) covers Developer ID signing, notarization, Sparkle signatures, draft releases, and resuming the exact candidate if Apple's processing takes longer than the workflow wait.
