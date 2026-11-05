@@ -13,7 +13,7 @@ if existing {
         userInfo: ["command": command], deliverImmediately: true
     )
 } else if commands.keys.contains(where: arguments.contains) {
-    fputs("Torii is not running.\n", stderr)
+    fputs("Airloom is not running.\n", stderr)
     exit(1)
 } else {
     let app = NSApplication.shared

@@ -10,7 +10,7 @@ from pathlib import Path
 
 SUPPORT = Path.home() / "Library/Application Support/Torii"
 WALLPAPER = Path.home() / "Library/Application Support/com.apple.wallpaper"
-APP = Path.home() / "Applications/Torii.app/Contents/MacOS/Torii"
+APP = Path.home() / "Applications/Airloom.app/Contents/MacOS/Airloom"
 
 
 def command(value):

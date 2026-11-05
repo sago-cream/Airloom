@@ -6,7 +6,8 @@ func require(_ condition: @autoclosure () -> Bool, _ message: String) {
 }
 
 let source = URL(fileURLWithPath: CommandLine.arguments[1])
-let settingsBefore = try Data(contentsOf: WallpaperSettings.settingsURL)
+let settingsBefore = try? Data(contentsOf: WallpaperSettings.settingsURL)
+let template = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("build/Airloom.saver")
 
 Task { @MainActor in
     do {
@@ -14,7 +15,7 @@ Task { @MainActor in
             _ = try await VideoImporter.prepare(source: URL(fileURLWithPath: "/invalid/wallpaper.jpeg"))
             fatalError("A non-MP4 must be rejected")
         } catch VideoImportError.noVideo {}
-        let prepared = try await VideoImporter.prepare(source: source)
+        let prepared = try await VideoImporter.prepare(source: source, saverTemplate: template)
         defer { try? FileManager.default.removeItem(at: prepared.directory) }
         let input = AVURLAsset(url: source)
         let output = AVURLAsset(url: prepared.videoURL)
@@ -34,9 +35,16 @@ Task { @MainActor in
         let inputDuration = try await input.load(.duration).seconds
         let outputDuration = try await output.load(.duration).seconds
         require(abs(inputDuration - outputDuration) < 0.1, "Import must preserve duration")
-        let settingsAfter = try Data(contentsOf: WallpaperSettings.settingsURL)
+        let settingsAfter = try? Data(contentsOf: WallpaperSettings.settingsURL)
         require(settingsAfter == settingsBefore,
                 "Preparation must not change the active wallpaper")
+        let verification = Process()
+        verification.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+        verification.arguments = ["--verify", "--deep", "--strict", prepared.screenSaverURL.path]
+        try verification.run()
+        verification.waitUntilExit()
+        require(verification.terminationStatus == 0, "Import must preserve the helper's signature")
+        require(!FileManager.default.fileExists(atPath: prepared.screenSaverURL.appendingPathComponent("Contents/Resources/Wallpaper.mp4").path), "User media must stay outside signed code")
         print("Native import passed: MP4 validation, audio removal, dimensions, frame rate, rotation, duration, isolated staging")
         exit(0)
     } catch {

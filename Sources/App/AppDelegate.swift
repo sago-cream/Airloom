@@ -1,11 +1,14 @@
 import AppKit
 import ServiceManagement
+import Sparkle
 import UniformTypeIdentifiers
 import Darwin
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var controller: DesktopController?
     private var statusItem: NSStatusItem?
+    private var updater: SPUStandardUpdaterController?
+    private var updateItem: NSMenuItem?
     private var stateItem: NSMenuItem?
     private var pauseItem: NSMenuItem?
     private var commandObserver: NSObjectProtocol?
@@ -26,32 +29,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        guard var loaded = try? WallpaperSettings.load(),
-              FileManager.default.isReadableFile(atPath: loaded.mediaPath) else {
-            showError("No wallpaper is installed. Run Scripts/install.sh with a video file, then reopen Torii.")
-            NSApp.terminate(nil)
-            return
+        var loaded = (try? WallpaperSettings.load()) ?? WallpaperSettings(sourcePath: "", mediaPath: "", title: "Airloom")
+        let hasWallpaper = FileManager.default.isReadableFile(atPath: loaded.mediaPath)
+        if hasWallpaper {
+            do { try DesktopImageManager.applyPoster(settings: &loaded) }
+            catch { NSLog("Airloom: could not set the matching still: %@", error.localizedDescription) }
         }
-        do { try DesktopImageManager.applyPoster(settings: &loaded) }
-        catch { NSLog("Torii: could not set the matching lock-screen still: %@", error.localizedDescription) }
         settings = loaded
         sessionLocked = SessionState.isLocked
         observeLockLifecycle()
-        controller = DesktopController(settings: loaded)
-        controller?.onStateChange = { [weak self] in self?.updateState() }
-        controller?.onHandoffReady = { [weak self] in
-            guard let self else { return }
-            self.rendererRefresh?.cancel()
-            let refresh = DispatchWorkItem { [weak self] in
-                guard let self, !self.sessionLocked, self.settings?.lockScreenSlotID != nil else { return }
-                LockScreenInstaller.reload(includeAgent: false)
-            }
-            self.rendererRefresh = refresh
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: refresh)
-        }
+        if hasWallpaper { startDesktop(settings: loaded) }
+        updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "mountain.2", accessibilityDescription: "Torii wallpaper")
-        item.button?.toolTip = "Torii — \(loaded.title)"
+        item.button?.image = NSImage(systemSymbolName: "wind", accessibilityDescription: "Airloom wallpaper")
+        item.button?.toolTip = "Airloom — \(loaded.title)"
         item.menu = makeMenu()
         statusItem = item
         deactivationObserver = NotificationCenter.default.addObserver(
@@ -75,10 +66,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
         writeDiagnostics()
-        if loaded.lockScreenSlotID != nil, LockScreenInstaller.state()?.mediaPath != loaded.mediaPath {
+        if hasWallpaper, loaded.lockScreenSlotID != nil, LockScreenInstaller.state()?.mediaPath != loaded.mediaPath {
             setLockScreen(true)
         }
-        if CommandLine.arguments.contains("--show") { showMenu() }
+        if !hasWallpaper, !sessionLocked {
+            DispatchQueue.main.async { self.importVideo() }
+        } else if CommandLine.arguments.contains("--show") { showMenu() }
+    }
+
+    private func startDesktop(settings loaded: WallpaperSettings) {
+        controller = DesktopController(settings: loaded)
+        controller?.onStateChange = { [weak self] in self?.updateState() }
+        controller?.onHandoffReady = { [weak self] in
+            guard let self else { return }
+            self.rendererRefresh?.cancel()
+            let refresh = DispatchWorkItem { [weak self] in
+                guard let self, !self.sessionLocked, self.settings?.lockScreenSlotID != nil else { return }
+                LockScreenInstaller.reload(includeAgent: false)
+            }
+            self.rendererRefresh = refresh
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: refresh)
+        }
     }
 
     private func makeMenu() -> NSMenu {
@@ -91,7 +99,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(item)
             return item
         }
-        stateItem = item("Torii")
+        stateItem = item("Airloom")
         stateItem?.isEnabled = false
         menu.addItem(.separator())
         pauseItem = item("Pause Wallpaper", #selector(togglePause), key: "p")
@@ -101,7 +109,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         lockScreenItem = item("Animate Lock Screen", #selector(toggleLockScreen))
         loginItem = item("Start at Login", #selector(toggleLogin))
         menu.addItem(.separator())
-        _ = item("Quit Torii", #selector(quit), key: "q")
+        updateItem = item("Check for Updates…", #selector(checkForUpdates))
+        _ = item("Quit Airloom", #selector(quit), key: "q")
         return menu
     }
 
@@ -210,7 +219,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         panel.allowedContentTypes = [.mpeg4Movie]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.directoryURL = settings.map { URL(fileURLWithPath: $0.sourcePath).deletingLastPathComponent() }
+        panel.directoryURL = settings.flatMap { $0.sourcePath.isEmpty ? nil : URL(fileURLWithPath: $0.sourcePath).deletingLastPathComponent() }
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Documents/wallpaper")
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
@@ -235,10 +244,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     catch { self.showError("The desktop video was imported, but the lock screen could not be updated: \(error.localizedDescription)") }
                 }
                 do { try DesktopImageManager.applyPoster(settings: &updated) }
-                catch { NSLog("Torii: could not update the matching still: %@", error.localizedDescription) }
+                catch { NSLog("Airloom: could not update the matching still: %@", error.localizedDescription) }
                 self.settings = updated
                 if updated.lockScreenSlotID != nil, !self.sessionLocked { LockScreenInstaller.reload(includeAgent: true) }
-                self.controller?.update(settings: updated)
+                if let controller = self.controller { controller.update(settings: updated) }
+                else { self.startDesktop(settings: updated) }
                 VideoImporter.removePreviousMedia(previous, keeping: updated)
             } catch {
                 if let preparedImport { try? FileManager.default.removeItem(at: preparedImport.directory) }
@@ -262,6 +272,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         loginItem?.state = SMAppService.mainApp.status == .enabled ? .on : .off
     }
 
+    @objc private func checkForUpdates(_ sender: Any?) { updater?.checkForUpdates(sender) }
+
     @objc private func quit() { NSApp.terminate(nil) }
 
     private func releaseTemporaryMemory() {
@@ -269,16 +281,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func updateState() {
-        let state = importing ? "Importing…" : lockScreenBusy ? "Preparing Lock Screen…" : controller?.state ?? "Starting"
-        stateItem?.title = "Torii — \(state)"
+        let state = importing ? "Importing…" : lockScreenBusy ? "Preparing Lock Screen…" : controller?.state ?? "Choose a Video…"
+        stateItem?.title = "Airloom — \(state)"
+        updateItem?.isEnabled = updater?.updater.canCheckForUpdates == true
         importItem?.isEnabled = !importing && !lockScreenBusy
-        lockScreenItem?.isEnabled = !importing && !lockScreenBusy
+        pauseItem?.isEnabled = controller != nil
+        coverageItem?.isEnabled = controller != nil
+        lockScreenItem?.isEnabled = controller != nil && !importing && !lockScreenBusy
         pauseItem?.title = controller?.userPaused == true ? "Resume Wallpaper" : "Pause Wallpaper"
         coverageItem?.state = settings?.pauseWhenCovered == false ? .off : .on
         lockScreenItem?.state = settings?.lockScreenSlotID != nil ? .on : .off
         loginItem?.state = SMAppService.mainApp.status == .enabled ? .on : .off
         statusItem?.button?.appearsDisabled = controller?.userPaused == true
-        statusItem?.button?.toolTip = settings.map { "Torii — \($0.title)" }
+        statusItem?.button?.toolTip = settings.map { "Airloom — \($0.title)" }
         writeDiagnostics()
     }
 
@@ -294,7 +309,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func showError(_ message: String) {
         let alert = NSAlert()
-        alert.messageText = "Torii"
+        alert.messageText = "Airloom"
         alert.informativeText = message
         alert.alertStyle = .warning
         alert.runModal()

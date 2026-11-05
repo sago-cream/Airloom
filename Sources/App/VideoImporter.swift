@@ -2,14 +2,13 @@ import AppKit
 import AVFoundation
 
 enum VideoImportError: LocalizedError {
-    case noVideo, exportUnavailable, screenSaverMissing, signingFailed(String)
+    case noVideo, exportUnavailable, screenSaverMissing
 
     var errorDescription: String? {
         switch self {
         case .noVideo: return "Choose an MP4 containing a playable video track."
         case .exportUnavailable: return "This video's codec cannot be copied into an MP4. Export it as H.264 or HEVC first."
-        case .screenSaverMissing: return "The Torii screen saver is missing. Reinstall Torii, then import again."
-        case .signingFailed(let detail): return "Could not prepare the screen saver: \(detail)"
+        case .screenSaverMissing: return "The Airloom screen saver is missing. Reinstall Airloom, then import again."
         }
     }
 }
@@ -28,7 +27,11 @@ enum VideoImporter {
             .appendingPathComponent("Library/Screen Savers/Torii.saver")
     }
 
-    static func prepare(source: URL) async throws -> PreparedVideo {
+    static var bundledSaverURL: URL? {
+        Bundle.main.url(forResource: "Airloom", withExtension: "saver")
+    }
+
+    static func prepare(source: URL, saverTemplate: URL? = nil) async throws -> PreparedVideo {
         guard source.pathExtension.lowercased() == "mp4" else { throw VideoImportError.noVideo }
         let asset = AVURLAsset(url: source)
         defer { asset.cancelLoading() }
@@ -61,24 +64,11 @@ enum VideoImporter {
             let posterURL = directory.appendingPathComponent("Poster.jpg")
             try poster.write(to: posterURL, options: .atomic)
             let stagedSaver = directory.appendingPathComponent("Torii.saver")
+            let template = saverTemplate ?? bundledSaverURL ?? installedSaverURL
             try await Task.detached(priority: .userInitiated) {
-                guard FileManager.default.fileExists(atPath: installedSaverURL.path) else {
-                    throw VideoImportError.screenSaverMissing
-                }
-                try FileManager.default.copyItem(at: installedSaverURL, to: stagedSaver)
-                let saverMedia = stagedSaver.appendingPathComponent("Contents/Resources/Wallpaper.mp4")
-                if FileManager.default.fileExists(atPath: saverMedia.path) { try FileManager.default.removeItem(at: saverMedia) }
-                try FileManager.default.copyItem(at: videoURL, to: saverMedia)
-                let signing = Process()
-                let errors = Pipe()
-                signing.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
-                signing.arguments = ["--force", "--sign", "-", "--timestamp=none", stagedSaver.path]
-                signing.standardError = errors
-                signing.standardOutput = FileHandle.nullDevice
-                try signing.run()
-                let detail = String(data: errors.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                signing.waitUntilExit()
-                guard signing.terminationStatus == 0 else { throw VideoImportError.signingFailed(detail) }
+                guard FileManager.default.fileExists(atPath: template.path) else { throw VideoImportError.screenSaverMissing }
+                // Copy the signed helper unchanged. User media stays in Application Support.
+                try FileManager.default.copyItem(at: template, to: stagedSaver)
             }.value
             return PreparedVideo(directory: directory, videoURL: videoURL, posterURL: posterURL,
                                  screenSaverURL: stagedSaver, sourceURL: source)
@@ -94,11 +84,16 @@ enum VideoImporter {
         settings.mediaPath = prepared.videoURL.path
         settings.posterPath = prepared.posterURL.path
         settings.title = prepared.sourceURL.deletingPathExtension().lastPathComponent
+        let previousData = try? Data(contentsOf: WallpaperSettings.settingsURL)
         try settings.save()
         do {
-            _ = try FileManager.default.replaceItemAt(installedSaverURL, withItemAt: prepared.screenSaverURL)
+            try FileManager.default.createDirectory(at: installedSaverURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if FileManager.default.fileExists(atPath: installedSaverURL.path) {
+                _ = try FileManager.default.replaceItemAt(installedSaverURL, withItemAt: prepared.screenSaverURL)
+            } else { try FileManager.default.moveItem(at: prepared.screenSaverURL, to: installedSaverURL) }
         } catch {
-            try? previous.save()
+            if let previousData { try? previousData.write(to: WallpaperSettings.settingsURL, options: .atomic) }
+            else { try? FileManager.default.removeItem(at: WallpaperSettings.settingsURL) }
             throw error
         }
         DistributedNotificationCenter.default().postNotificationName(

@@ -4,14 +4,14 @@ import ScreenSaver
 
 let app = NSApplication.shared
 app.setActivationPolicy(.regular)
-let path = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Screen Savers/Torii.saver")
+let path = URL(fileURLWithPath: CommandLine.arguments[1])
 let bundle = Bundle(url: path)!
 try bundle.loadAndReturnError()
 guard let viewClass = bundle.principalClass as? ScreenSaverView.Type,
       let saver = viewClass.init(frame: NSRect(x: 0, y: 0, width: 640, height: 360), isPreview: true)
 else { fatalError("Screen saver principal class did not load") }
 let window = NSWindow(contentRect: saver.frame, styleMask: [.titled, .closable], backing: .buffered, defer: false)
-window.title = "Torii Screen Saver Test"
+window.title = "Airloom Screen Saver Test"
 window.contentView = saver
 window.center()
 window.makeKeyAndOrderFront(nil)

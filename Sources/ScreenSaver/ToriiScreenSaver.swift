@@ -29,9 +29,10 @@ final class ToriiScreenSaver: ScreenSaverView {
     }
 
     private func startVideo() {
-        guard video == nil,
-              let url = Bundle(for: ToriiScreenSaver.self).url(forResource: "Wallpaper", withExtension: "mp4")
-        else { return }
+        guard video == nil else { return }
+        let configured = (try? WallpaperSettings.load()).map { URL(fileURLWithPath: $0.mediaPath) }
+        let bundled = Bundle(for: ToriiScreenSaver.self).url(forResource: "Wallpaper", withExtension: "mp4")
+        guard let url = configured.flatMap({ FileManager.default.isReadableFile(atPath: $0.path) ? $0 : nil }) ?? bundled else { return }
         let view = LoopingVideoView(frame: bounds)
         view.autoresizingMask = [.width, .height]
         addSubview(view)

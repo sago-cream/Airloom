@@ -6,7 +6,7 @@ import subprocess
 import time
 from pathlib import Path
 
-APP = Path.home() / "Applications/Torii.app/Contents/MacOS/Torii"
+APP = Path.home() / "Applications/Airloom.app/Contents/MacOS/Airloom"
 STATUS = Path.home() / "Library/Application Support/Torii/status.json"
 
 
@@ -22,7 +22,7 @@ def snapshot():
         if STATUS.exists() and STATUS.stat().st_mtime_ns != before:
             return json.loads(STATUS.read_text())
         time.sleep(0.05)
-    raise RuntimeError("Torii did not acknowledge the snapshot command")
+    raise RuntimeError("Airloom did not acknowledge the snapshot command")
 
 
 def main():

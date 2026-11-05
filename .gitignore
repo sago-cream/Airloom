@@ -4,3 +4,11 @@ build/
 Benchmarks/*.json
 Benchmarks/*.html
 __pycache__/
+.build/
+dist/
+.env
+.env.*
+!.env.example
+*.p12
+*.p8
+*.key

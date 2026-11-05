@@ -10,7 +10,7 @@ from pathlib import Path
 from measure import snapshot
 
 SUPPORT = Path.home() / "Library/Application Support/Torii"
-APP = Path.home() / "Applications/Torii.app/Contents/MacOS/Torii"
+APP = Path.home() / "Applications/Airloom.app/Contents/MacOS/Airloom"
 
 
 def command(value):
@@ -34,7 +34,7 @@ def main():
     args = parser.parse_args()
     if args.cycles < 10:
         parser.error("Use at least ten cycles to distinguish warm-up from sustained growth")
-    pid = int(subprocess.check_output(["pgrep", "-x", "Torii"], text=True).strip())
+    pid = int(subprocess.check_output(["pgrep", "-x", "Airloom"], text=True).strip())
     settings = json.loads((SUPPORT / "settings.json").read_text())
     initial_state = state()["state"]
     if initial_state in {"Session locked", "Display asleep", "Screen saver active", "Low Power Mode"}:
