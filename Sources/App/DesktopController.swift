@@ -27,37 +27,34 @@ final class DesktopController {
     private var displayUpdate: DispatchWorkItem?
     private var visibilityTimer: Timer?
     private var coveredScreens = Set<String>()
-    private var memoryRelease: DispatchWorkItem?
     private var policy = PlaybackPolicy()
     private var settings: WallpaperSettings
-    private var handoffNeeded = false
-    private var handoffPending = false
-    private var handoffTask: Task<Void, Never>?
+    private var lockPlaybackActive = false
     private var handoffGeneration = 0
     private var handoffDiagnostics: [String: Any] = [:]
-    private var handoffFade = 0.0
-    private var resumeTimeline: PlaybackTimeline?
     private var nativeRefreshNeeded = false
     private var nativeClock: PlaybackTimeline?
     private var clockSample: Task<Void, Never>?
+    private var unlockGraceUntil = Date.distantPast
+    private var graceEnd: DispatchWorkItem?
     var onHandoffReady: (() -> Void)?
     var onStateChange: (() -> Void)?
 
     init(settings: WallpaperSettings) {
         self.settings = settings
         policy.sessionInactive = SessionState.isLocked
-        handoffNeeded = policy.sessionInactive && settings.lockScreenSlotID != nil
-        nativeRefreshNeeded = handoffNeeded
+        lockPlaybackActive = policy.sessionInactive && settings.lockScreenSlotID != nil
+        nativeRefreshNeeded = lockPlaybackActive
         policy.lowPowerMode = settings.pauseInLowPowerMode && ProcessInfo.processInfo.isLowPowerModeEnabled
         observe(NSWorkspace.willSleepNotification) { $0.policy.screenSleeping = true }
         observe(NSWorkspace.screensDidSleepNotification) { $0.policy.screenSleeping = true }
         observe(NSWorkspace.didWakeNotification) {
             $0.policy.screenSleeping = false
-            if $0.policy.sessionInactive { $0.sampleNativeClock(after: 0) }
+            if $0.policy.sessionInactive { $0.sampleNativeClock(after: 0.2) }
         }
         observe(NSWorkspace.screensDidWakeNotification) {
             $0.policy.screenSleeping = false
-            if $0.policy.sessionInactive { $0.sampleNativeClock(after: 0) }
+            if $0.policy.sessionInactive { $0.sampleNativeClock(after: 0.2) }
         }
         observe(NSWorkspace.sessionDidResignActiveNotification) { $0.sessionResigned() }
         observe(NSWorkspace.sessionDidBecomeActiveNotification) {
@@ -67,11 +64,11 @@ final class DesktopController {
         observeDistributed("com.apple.screenIsUnlocked") { $0.sessionReturned() }
         observeDistributed("com.apple.screensaver.didstart") {
             $0.policy.screenSaverActive = true
-            $0.markHandoffNeeded()
+            $0.beginLockPlayback()
         }
         observeDistributed("com.apple.screensaver.didstop") {
             $0.policy.screenSaverActive = false
-            if !$0.policy.sessionInactive { $0.beginHandoff() }
+            if !$0.policy.sessionInactive { $0.finishLockPlayback() }
         }
         let power = NotificationCenter.default.addObserver(
             forName: .NSProcessInfoPowerStateDidChange, object: nil, queue: .main
@@ -109,12 +106,11 @@ final class DesktopController {
         visibilityTimer?.tolerance = 1
         rebuildSurfaces()
         refreshCoverage()
-        if handoffNeeded { sampleNativeClock(after: 0) }
+        if lockPlaybackActive { sampleNativeClock(after: 0.2) }
     }
 
     var state: String {
         if let reason = policy.pauseReason { return reason }
-        if handoffPending { return "Resuming" }
         if surfaces.contains(where: { $0.video.failure != nil }) { return "Playback failed" }
         return surfaces.contains { isVisible($0) } ? "Playing" : "Desktop covered"
     }
@@ -122,34 +118,35 @@ final class DesktopController {
 
     func setPaused(_ paused: Bool) {
         policy.userPaused = paused
+        if !paused, lockPlaybackActive { sampleNativeClock(after: 0.2) }
         applyPolicy()
     }
 
     func update(settings: WallpaperSettings) {
-        handoffTask?.cancel()
-        clockSample?.cancel()
-        nativeClock = nil
-        resumeTimeline = nil
-        handoffGeneration += 1
-        handoffPending = false
-        handoffNeeded = policy.sessionInactive && settings.lockScreenSlotID != nil
-        nativeRefreshNeeded = handoffNeeded
+        let sourceChanged = self.settings.mediaPath != settings.mediaPath
+        let lockModeChanged = self.settings.lockScreenSlotID != settings.lockScreenSlotID
         self.settings = settings
-        rebuildSurfaces()
-        if handoffNeeded { sampleNativeClock(after: 0) }
+        policy.lowPowerMode = settings.pauseInLowPowerMode && ProcessInfo.processInfo.isLowPowerModeEnabled
+        if sourceChanged || lockModeChanged {
+            clockSample?.cancel()
+            nativeClock = nil
+            handoffGeneration += 1
+            lockPlaybackActive = (policy.sessionInactive || policy.screenSaverActive) && settings.lockScreenSlotID != nil
+            nativeRefreshNeeded = lockPlaybackActive
+            if sourceChanged { rebuildSurfaces() }
+            if lockPlaybackActive { sampleNativeClock(after: 0.2) }
+        }
+        applyPolicy()
     }
 
-    private func markHandoffNeeded() {
-        guard settings.lockScreenSlotID != nil else { return }
+    private func beginLockPlayback() {
+        guard settings.lockScreenSlotID != nil, !lockPlaybackActive else { return }
+        lockPlaybackActive = true
         nativeRefreshNeeded = true
-        resumeTimeline = nil
-        handoffNeeded = true
-        handoffPending = true
-        handoffTask?.cancel()
-        handoffTask = nil
         handoffGeneration += 1
         nativeClock = nil
-        sampleNativeClock(after: 6.5)
+        handoffDiagnostics = ["result": "preparing_behind_lock"]
+        sampleNativeClock(after: 0.2)
     }
 
     private func sampleNativeClock(after delay: Double) {
@@ -158,57 +155,51 @@ final class DesktopController {
         let generation = handoffGeneration
         let media = URL(fileURLWithPath: settings.mediaPath)
         clockSample = Task { @MainActor [weak self] in
-            do { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
-            catch { return }
-            let clock = await Task.detached(priority: .utility) { await LockScreenTimeline.resolve(media: media) }.value
-            guard let self, !Task.isCancelled, self.handoffGeneration == generation else { return }
-            self.nativeClock = clock
+            // The first read catches short locks; the second includes the renderer's periodic stats.
+            for wait in [delay, 6.5] {
+                do { try await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000)) }
+                catch { return }
+                let clock = await Task.detached(priority: .utility) { await LockScreenTimeline.resolve(media: media) }.value
+                guard let self, !Task.isCancelled, self.handoffGeneration == generation,
+                      self.lockPlaybackActive else { return }
+                guard let clock, !self.policy.screenSleeping, !self.policy.userPaused,
+                      !self.policy.lowPowerMode else { continue }
+                self.nativeClock = clock
+                for surface in self.surfaces { surface.video.synchronize(to: clock) }
+                self.handoffDiagnostics = ["result": "aligned_behind_lock", "media_anchor": clock.mediaSeconds,
+                                           "host_anchor": clock.hostSeconds, "native_rate": clock.rate]
+                self.applyPolicy()
+            }
         }
     }
 
     private func sessionResigned() {
         policy.sessionInactive = true
-        markHandoffNeeded()
+        beginLockPlayback()
     }
 
     private func sessionReturned() {
         policy.sessionInactive = false
-        beginHandoff()
+        finishLockPlayback()
     }
 
-    private func beginHandoff() {
-        guard handoffNeeded, handoffTask == nil else { return }
-        handoffPending = true
-        let generation = handoffGeneration
-        let media = URL(fileURLWithPath: settings.mediaPath)
-        let sampled = nativeClock
+    private func finishLockPlayback() {
+        guard lockPlaybackActive else { return }
+        lockPlaybackActive = false
+        handoffGeneration += 1
         clockSample?.cancel()
-        handoffTask = Task { @MainActor [weak self] in
-            let match: PlaybackTimeline?
-            if let sampled { match = sampled }
-            else {
-                match = await Task.detached(priority: .userInitiated) {
-                    await LockScreenTimeline.resolve(media: media)
-                }.value
-            }
-            guard let self, !Task.isCancelled, generation == self.handoffGeneration else { return }
-            if let match {
-                self.resumeTimeline = match
-                let position = match.position(at: CMClockGetTime(CMClockGetHostTimeClock()).seconds)
-                for surface in self.surfaces { surface.resumeSeconds = position }
-                self.handoffFade = 0
-                self.handoffDiagnostics = ["result": "native_clock", "time_seconds": position,
-                                           "media_anchor": match.mediaSeconds, "host_anchor": match.hostSeconds, "native_rate": match.rate]
-            } else {
-                self.handoffFade = 0.25
-                self.handoffDiagnostics = ["result": "fade_fallback", "reason": "Native playback timing was unavailable"]
-            }
-            self.handoffNeeded = false
-            self.handoffPending = false
-            self.handoffTask = nil
-            self.applyPolicy()
-            malloc_zone_pressure_relief(nil, 0)
+        // Keep the already-presented player through the login-window fade and coverage refresh.
+        unlockGraceUntil = Date().addingTimeInterval(1)
+        handoffDiagnostics["result"] = "warm_resume"
+        handoffDiagnostics["ready_before_unlock"] = surfaces.allSatisfy { $0.video.prepared && $0.video.presented }
+        graceEnd?.cancel()
+        let end = DispatchWorkItem { [weak self] in
+            self?.refreshCoverage()
+            self?.applyPolicy()
         }
+        graceEnd = end
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: end)
+        refreshCoverage()
     }
 
     func stop() {
@@ -251,39 +242,18 @@ final class DesktopController {
     }
 
     private func applyPolicy() {
-        let shouldUnload = !policy.shouldPlay || handoffPending
-        var releasedResources = false
         for surface in surfaces {
-            let visible = isVisible(surface)
-            if shouldUnload || !visible {
-                if let player = surface.video.player {
-                    let time = player.currentTime().seconds
-                    if time.isFinite { surface.resumeSeconds = time }
-                    surface.video.unload(preserveFrame: true)
-                    releasedResources = true
-                }
-            } else {
-                if surface.video.player == nil && visible {
-                    surface.video.setPlaying(false)
-                    surface.video.fadeInDuration = handoffFade
-                    surface.video.load(url: URL(fileURLWithPath: settings.mediaPath), resumeAt: surface.resumeSeconds, timeline: resumeTimeline)
-                }
-                surface.video.setPlaying(policy.shouldPlay && visible)
+            if surface.video.player == nil {
+                surface.video.setPlaying(false)
+                surface.video.load(url: URL(fileURLWithPath: settings.mediaPath), resumeAt: surface.resumeSeconds)
             }
+            surface.video.setPlaying(policy.shouldAnimate(visible: isVisible(surface),
+                nativeLockScreen: settings.lockScreenSlotID != nil, unlockGrace: Date() < unlockGraceUntil))
         }
-        if nativeRefreshNeeded, !handoffPending, !policy.sessionInactive,
-           surfaces.allSatisfy({ $0.video.presented || !isVisible($0) || policy.userPaused }) {
+        if nativeRefreshNeeded, !lockPlaybackActive, !policy.sessionInactive, !policy.screenSaverActive, !policy.screenSleeping,
+           surfaces.allSatisfy({ $0.video.prepared && $0.video.presented }) {
             nativeRefreshNeeded = false
-            resumeTimeline = nil
             onHandoffReady?()
-        }
-        if releasedResources {
-            memoryRelease?.cancel()
-            // AVFoundation finishes teardown asynchronously. Return unused allocator pages
-            // after that drain, rather than retaining decoder allocations while hidden.
-            let release = DispatchWorkItem { malloc_zone_pressure_relief(nil, 0) }
-            memoryRelease = release
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: release)
         }
         onStateChange?()
     }
@@ -357,6 +327,8 @@ final class DesktopController {
                     "ready": player?.currentItem?.status == .readyToPlay,
                     "presented": surface.video.presented,
                     "placeholder": surface.video.hasPlaceholder,
+                    "load_generation": surface.video.loadGeneration,
+                    "prepared": surface.video.prepared,
                     "error": surface.video.failure ?? "",
                     "window_level": surface.window.level.rawValue,
                     "visible": isVisible(surface),
@@ -370,10 +342,9 @@ final class DesktopController {
 
     deinit {
         displayUpdate?.cancel()
-        handoffTask?.cancel()
         clockSample?.cancel()
         visibilityTimer?.invalidate()
-        memoryRelease?.cancel()
+        graceEnd?.cancel()
         for (center, token) in observers { center.removeObserver(token) }
         for token in distributedObservers { DistributedNotificationCenter.default().removeObserver(token) }
     }

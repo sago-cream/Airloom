@@ -1,109 +1,111 @@
 {
   "cycles" : 20,
-  "final_paused_mean_mib" : 14.297561645507812,
-  "growth_mib" : 0.94999999999999929,
-  "initial_paused_mean_mib" : 13.347561645507813,
+  "final_paused_mean_mib" : 21.669436645507812,
+  "growth_mib" : 0.18437499999999929,
+  "initial_paused_mean_mib" : 21.485061645507812,
   "limitation" : "Component lifecycle test; not an app-wide or multi-day memory benchmark",
+  "mode" : "One retained player across play\/pause cycles",
+  "replacement_cycles" : 5,
   "samples" : [
     {
-      "active_footprint_mib" : 15.860061645507812,
+      "active_footprint_mib" : 22.969436645507812,
       "cycle" : 1,
-      "paused_footprint_mib" : 13.000686645507812
+      "paused_footprint_mib" : 23.078811645507812
     },
     {
-      "active_footprint_mib" : 15.141311645507812,
+      "active_footprint_mib" : 21.125686645507812,
       "cycle" : 2,
-      "paused_footprint_mib" : 13.250686645507812
+      "paused_footprint_mib" : 21.141311645507812
     },
     {
-      "active_footprint_mib" : 13.938186645507812,
+      "active_footprint_mib" : 21.141311645507812,
       "cycle" : 3,
-      "paused_footprint_mib" : 13.391311645507812
+      "paused_footprint_mib" : 21.141311645507812
     },
     {
-      "active_footprint_mib" : 13.766311645507812,
+      "active_footprint_mib" : 21.031936645507812,
       "cycle" : 4,
-      "paused_footprint_mib" : 13.485061645507812
+      "paused_footprint_mib" : 21.031936645507812
     },
     {
-      "active_footprint_mib" : 15.797561645507812,
+      "active_footprint_mib" : 21.031936645507812,
       "cycle" : 5,
-      "paused_footprint_mib" : 13.610061645507812
+      "paused_footprint_mib" : 21.031936645507812
     },
     {
-      "active_footprint_mib" : 14.406936645507812,
+      "active_footprint_mib" : 21.031936645507812,
       "cycle" : 6,
-      "paused_footprint_mib" : 13.719436645507812
+      "paused_footprint_mib" : 21.031936645507812
     },
     {
-      "active_footprint_mib" : 16.766311645507812,
+      "active_footprint_mib" : 20.953811645507812,
       "cycle" : 7,
-      "paused_footprint_mib" : 13.781936645507812
+      "paused_footprint_mib" : 20.938186645507812
     },
     {
-      "active_footprint_mib" : 14.297561645507812,
+      "active_footprint_mib" : 20.860061645507812,
       "cycle" : 8,
-      "paused_footprint_mib" : 13.938186645507812
+      "paused_footprint_mib" : 20.860061645507812
     },
     {
-      "active_footprint_mib" : 18.703834533691406,
+      "active_footprint_mib" : 20.688186645507812,
       "cycle" : 9,
-      "paused_footprint_mib" : 14.094436645507812
+      "paused_footprint_mib" : 24.375686645507812
     },
     {
-      "active_footprint_mib" : 15.406936645507812,
+      "active_footprint_mib" : 24.110061645507812,
       "cycle" : 10,
-      "paused_footprint_mib" : 14.156936645507812
+      "paused_footprint_mib" : 24.203811645507812
     },
     {
-      "active_footprint_mib" : 14.563186645507812,
+      "active_footprint_mib" : 24.235061645507812,
       "cycle" : 11,
-      "paused_footprint_mib" : 14.172561645507812
+      "paused_footprint_mib" : 23.281936645507812
     },
     {
-      "active_footprint_mib" : 14.547561645507812,
+      "active_footprint_mib" : 24.203811645507812,
       "cycle" : 12,
-      "paused_footprint_mib" : 14.203811645507812
+      "paused_footprint_mib" : 23.000686645507812
     },
     {
-      "active_footprint_mib" : 14.547561645507812,
+      "active_footprint_mib" : 24.360061645507812,
       "cycle" : 13,
-      "paused_footprint_mib" : 14.156936645507812
+      "paused_footprint_mib" : 24.360061645507812
     },
     {
-      "active_footprint_mib" : 14.485061645507812,
+      "active_footprint_mib" : 22.063186645507812,
       "cycle" : 14,
-      "paused_footprint_mib" : 14.141311645507812
+      "paused_footprint_mib" : 22.063186645507812
     },
     {
-      "active_footprint_mib" : 14.500686645507812,
+      "active_footprint_mib" : 22.078811645507812,
       "cycle" : 15,
-      "paused_footprint_mib" : 14.141311645507812
+      "paused_footprint_mib" : 22.172561645507812
     },
     {
-      "active_footprint_mib" : 16.500686645507812,
+      "active_footprint_mib" : 22.172561645507812,
       "cycle" : 16,
-      "paused_footprint_mib" : 14.172561645507812
+      "paused_footprint_mib" : 22.172561645507812
     },
     {
-      "active_footprint_mib" : 16.750686645507812,
+      "active_footprint_mib" : 21.953811645507812,
       "cycle" : 17,
-      "paused_footprint_mib" : 14.219436645507812
+      "paused_footprint_mib" : 21.953811645507812
     },
     {
-      "active_footprint_mib" : 14.625686645507812,
+      "active_footprint_mib" : 21.469436645507812,
       "cycle" : 18,
-      "paused_footprint_mib" : 14.281936645507812
+      "paused_footprint_mib" : 21.453811645507812
     },
     {
-      "active_footprint_mib" : 15.141311645507812,
+      "active_footprint_mib" : 21.453811645507812,
       "cycle" : 19,
-      "paused_footprint_mib" : 14.344436645507812
+      "paused_footprint_mib" : 21.531936645507812
     },
     {
-      "active_footprint_mib" : 15.250686645507812,
+      "active_footprint_mib" : 21.235061645507812,
       "cycle" : 20,
-      "paused_footprint_mib" : 14.469436645507812
+      "paused_footprint_mib" : 21.235061645507812
     }
   ]
 }

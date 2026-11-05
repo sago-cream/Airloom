@@ -17,4 +17,10 @@ struct PlaybackPolicy {
     }
 
     var shouldPlay: Bool { pauseReason == nil }
+
+    func shouldAnimate(visible: Bool, nativeLockScreen: Bool, unlockGrace: Bool = false) -> Bool {
+        guard !userPaused, !screenSleeping, !lowPowerMode else { return false }
+        if sessionInactive || screenSaverActive { return nativeLockScreen }
+        return visible || unlockGrace
+    }
 }

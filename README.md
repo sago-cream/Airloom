@@ -6,7 +6,7 @@ A native, local-only macOS video wallpaper app with animated lock-screen backgro
 
 Open `~/Applications/Torii.app` and click the mountain icon. All controls live in a compact native menu. **Import Video…** accepts your own MP4 and opens in the previous video's folder. It preserves the encoded video, removes audio, and updates the desktop and enabled lock-screen background. Original files are never modified.
 
-**Pause** pauses manually. **Pause when the desktop is covered** controls automatic resource release. **Animate lock screen** enables native video playback on macOS 26+; turn it off to restore the previous movie and wallpaper selections. **Start at login** controls macOS login registration.
+**Pause** pauses manually. **Pause when the desktop is covered** controls automatic playback pausing. **Animate lock screen** enables native video playback on macOS 26+; turn it off to restore the previous movie and wallpaper selections. **Start at login** controls macOS login registration.
 
 ## Build and install
 
@@ -26,19 +26,19 @@ Installation saves the original screen-saver preference and wallpaper index unde
 ## Playback and resource use
 
 - AVFoundation streams the original video into an `AVPlayerLayer`. Continuous playback uses no application frame timer or frame copying.
-- Each display has one player with a bounded `AVPlayerLooper` queue. Switching displays or videos tears down the previous players, items, observers, and layers.
-- Hidden and paused desktop players release their queues, video layers, and decoder resources. A still with a maximum edge of 640 pixels stays beneath the player while it seeks and prerolls, covering the desktop during unlock and resume. A one-shot frame extraction updates the still when playback stops; its decoder is then released. Resuming reloads at the saved playback position. Native window-occlusion events are supplemented by a coalesced three-second check of public window geometry, without requesting Accessibility or Screen Recording access.
-- Locking the session, starting the system screen saver, and sleeping displays release desktop decoding resources. Waking and unlocking resume only after all pause conditions clear. Low Power Mode and manual pause are respected independently. Startup also checks the current session lock state.
-- A native menu holds the controls without loading a preview or a separate settings window.
+- Each display retains one player with a bounded `AVPlayerLooper` queue. Source and display changes tear down the old player; ordinary pause, coverage changes, sleep, and unlock reuse it.
+- Covered desktops, sleeping displays, Low Power Mode, and manual pause stop playback while retaining the original decoded frame. Retaining the queue uses more paused memory than unloading it, but avoids decoder cold starts and low-resolution still-image transitions. Native window-occlusion events are supplemented by a coalesced three-second check of public window geometry.
+- With native lock-screen animation enabled, the desktop player can play behind the protected lock screen while the display is awake. It pauses when the display sleeps and resumes before authentication finishes when wake time permits. Native timing is sampled and applied while locked; unlock performs no log query, player replacement, or poster swap. A short grace period keeps playback through the login-window fade before applying coverage rules.
+- A native menu holds the controls. Outside clicks and app deactivation explicitly cancel tracking, and the mouse monitor is removed when the menu closes.
 - A screen-saver bundle carries its own silent video so the system host does not need access to Documents. Import prepares and signs a replacement bundle before activating it.
 
 ## Lock screen
 
-On macOS 26+, Torii uses the system's aerial-video pipeline for the actual logged-in session's lock-screen background. This was verified against the real `loginwindow` surface while the desktop player was unloaded. Authentication stays with macOS. Pre-login and FileVault screens remain system-controlled.
+On macOS 26+, Torii uses the system's aerial-video pipeline for the actual logged-in session's lock-screen background. The native background was verified against the real `loginwindow` surface independently of desktop playback. Authentication stays with macOS. Pre-login and FileVault screens remain system-controlled.
 
 Torii prepares a video-only MOV by repeating the original encoded video to at least ten minutes, without reducing resolution or frame rate. macOS's aerial renderer does not loop indefinitely: the repeated file covers the configured display-sleep interval, then can stop at its end if the display is kept awake.
 
-During a lock, Torii reads the native renderer's media and monotonic host clock. On unlock, it maps that clock into the original clip's loop, seeks and prerolls, then schedules the first desktop frame on the same timeline. It refreshes the system renderer for the next lock only after the desktop video is presented or covered by other windows. Timing reads use short-lived system-log queries, with no permanent helper or extra decoding while locked. The timing format is undocumented; if it is unavailable, Torii uses a brief fade instead. Continuity needs a live check on each supported macOS/display configuration.
+During a lock, Torii reads the native renderer's media and monotonic host clock and aligns the existing desktop player while it is hidden behind authentication. Unlock continues that prepared player immediately. The system renderer is refreshed for the next lock only after desktop playback is prepared. Short-lived system-log queries run during lock preparation and wake, without a permanent helper. The timing format is undocumented; when unavailable, the desktop continues on its own clock. Exact phase continuity across every macOS/display/sleep configuration still needs live verification.
 
 The movie replaces one already-downloaded aerial slot under `~/Library/Application Support/com.apple.wallpaper/aerials/videos`. The previous movie and wallpaper configuration are saved under `~/Library/Application Support/Torii/Backups/LockScreen`. Restore recovers the movie byte-for-byte and preserves later wallpaper selections that no longer use Torii's slot. System Settings retains the original aerial's name and catalog thumbnail.
 
@@ -57,10 +57,10 @@ zsh Scripts/test.sh --screen-saver
 # Check native lock-screen configuration and its reversible restore/reapply cycle.
 python3 Scripts/check-lock-screen.py --restore-cycle
 
-# Exercise decoder teardown and saved-position resume even without an unlocked UI.
+# Exercise retained play/pause cycles and complete decoder replacement.
 zsh Scripts/test.sh --memory
 
-# Check native clock parsing and scheduled desktop presentation.
+# Check native clock parsing and a warm lock/sleep/unlock lifecycle.
 zsh Scripts/test.sh --timeline
 
 # Sample CPU time and physical footprint for a PID and its descendants.

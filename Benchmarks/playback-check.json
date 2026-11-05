@@ -5,11 +5,14 @@
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 8.535160083,
+          "time_seconds": 0.0391805,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -23,20 +26,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:13Z"
+      "timestamp": "2026-11-05T06:56:08Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 10.603012083,
+          "time_seconds": 2.120382083,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -50,20 +61,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:16Z"
+      "timestamp": "2026-11-05T06:56:10Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 12.682799542,
+          "time_seconds": 4.194688333,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -77,20 +96,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:18Z"
+      "timestamp": "2026-11-05T06:56:12Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 14.7530045,
+          "time_seconds": 6.271724625,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -104,20 +131,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:20Z"
+      "timestamp": "2026-11-05T06:56:14Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 16.820390833,
+          "time_seconds": 8.355627,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -131,20 +166,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:22Z"
+      "timestamp": "2026-11-05T06:56:16Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 18.89226075,
+          "time_seconds": 10.425586917,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -158,20 +201,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:24Z"
+      "timestamp": "2026-11-05T06:56:18Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 20.97423675,
+          "time_seconds": 12.502480292,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -185,20 +236,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:26Z"
+      "timestamp": "2026-11-05T06:56:20Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 23.049238583,
+          "time_seconds": 14.578182417,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -212,20 +271,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:28Z"
+      "timestamp": "2026-11-05T06:56:22Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 25.1151005,
+          "time_seconds": 16.651520042,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -239,20 +306,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:30Z"
+      "timestamp": "2026-11-05T06:56:24Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 27.178656333,
+          "time_seconds": 18.73366875,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -266,20 +341,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:32Z"
+      "timestamp": "2026-11-05T06:56:26Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 29.245286292,
+          "time_seconds": 20.811773,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -293,20 +376,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:34Z"
+      "timestamp": "2026-11-05T06:56:28Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 31.31218475,
+          "time_seconds": 22.894056458,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -320,20 +411,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:36Z"
+      "timestamp": "2026-11-05T06:56:31Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 33.390768875,
+          "time_seconds": 24.977475042,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -347,20 +446,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:38Z"
+      "timestamp": "2026-11-05T06:56:33Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 35.473841875,
+          "time_seconds": 27.053733292,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -374,20 +481,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:40Z"
+      "timestamp": "2026-11-05T06:56:35Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 37.547214542,
+          "time_seconds": 29.137313792,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -401,20 +516,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:43Z"
+      "timestamp": "2026-11-05T06:56:37Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 39.613488417,
+          "time_seconds": 31.212564833,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -428,20 +551,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:45Z"
+      "timestamp": "2026-11-05T06:56:39Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 1.679716292,
+          "time_seconds": 33.277955,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -455,20 +586,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:47Z"
+      "timestamp": "2026-11-05T06:56:41Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 3.747228667,
+          "time_seconds": 35.348821917,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -482,20 +621,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:49Z"
+      "timestamp": "2026-11-05T06:56:43Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 5.812479667,
+          "time_seconds": 37.418248667,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -509,20 +656,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:51Z"
+      "timestamp": "2026-11-05T06:56:45Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 7.886876875,
+          "time_seconds": 39.487434042,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -536,20 +691,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:53Z"
+      "timestamp": "2026-11-05T06:56:47Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 9.964393667,
+          "time_seconds": 1.565330917,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -563,20 +726,28 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:55Z"
+      "timestamp": "2026-11-05T06:56:49Z"
     },
     {
       "displays": [
         {
           "error": "",
           "id": "1",
+          "load_generation": 1,
+          "placeholder": false,
+          "prepared": true,
           "presented": true,
           "queue_items": 3,
           "rate": 1,
           "ready": true,
-          "time_seconds": 12.024585333,
+          "time_seconds": 3.643616833,
           "visible": true,
           "window_frame": "{{0, 0}, {1710, 1107}}",
           "window_level": -2147483622
@@ -590,9 +761,14 @@
         "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
       },
       "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+      "menu": {
+        "outside_click_monitor": false,
+        "tracking": false
+      },
+      "native_clock_sample": {},
       "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
       "state": "Playing",
-      "timestamp": "2026-11-05T05:54:57Z"
+      "timestamp": "2026-11-05T06:56:51Z"
     }
   ],
   "paused": {
@@ -600,11 +776,14 @@
       {
         "error": "",
         "id": "1",
-        "presented": false,
-        "queue_items": 0,
+        "load_generation": 1,
+        "placeholder": false,
+        "prepared": true,
+        "presented": true,
+        "queue_items": 3,
         "rate": 0,
-        "ready": false,
-        "time_seconds": 14.098838917,
+        "ready": true,
+        "time_seconds": 5.723440292,
         "visible": true,
         "window_frame": "{{0, 0}, {1710, 1107}}",
         "window_level": -2147483622
@@ -618,20 +797,28 @@
       "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
     },
     "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+    "menu": {
+      "outside_click_monitor": false,
+      "tracking": false
+    },
+    "native_clock_sample": {},
     "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
     "state": "Paused",
-    "timestamp": "2026-11-05T05:55:00Z"
+    "timestamp": "2026-11-05T06:56:55Z"
   },
   "resumed": {
     "displays": [
       {
         "error": "",
         "id": "1",
+        "load_generation": 1,
+        "placeholder": false,
+        "prepared": true,
         "presented": true,
         "queue_items": 3,
         "rate": 1,
         "ready": true,
-        "time_seconds": 14.134357833,
+        "time_seconds": 5.743333459,
         "visible": true,
         "window_frame": "{{0, 0}, {1710, 1107}}",
         "window_level": -2147483622
@@ -645,8 +832,13 @@
       "slot_id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1"
     },
     "media": "/Users/hsi/Library/Application Support/Torii/Media/22ED052E-527C-4FAA-9AED-C84C027E4AA1/Wallpaper.mp4",
+    "menu": {
+      "outside_click_monitor": false,
+      "tracking": false
+    },
+    "native_clock_sample": {},
     "source": "/Users/hsi/Documents/Wallpaper/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4",
     "state": "Playing",
-    "timestamp": "2026-11-05T05:55:01Z"
+    "timestamp": "2026-11-05T06:56:55Z"
   }
 }

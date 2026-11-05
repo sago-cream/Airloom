@@ -1,0 +1,61 @@
+{
+  "mode": "Retained player",
+  "cycles": 10,
+  "initial_paused_mean_mib": 18.832073974609376,
+  "final_paused_mean_mib": 18.838323974609374,
+  "growth_mib": 0.006249999999997868,
+  "mean_active_footprint_mib": 18.752386474609374,
+  "samples": [
+    {
+      "cycle": 1,
+      "active_footprint_mib": 19.547698974609375,
+      "paused_footprint_mib": 19.547698974609375
+    },
+    {
+      "cycle": 2,
+      "active_footprint_mib": 18.703948974609375,
+      "paused_footprint_mib": 18.813323974609375
+    },
+    {
+      "cycle": 3,
+      "active_footprint_mib": 18.547698974609375,
+      "paused_footprint_mib": 18.500823974609375
+    },
+    {
+      "cycle": 4,
+      "active_footprint_mib": 18.563323974609375,
+      "paused_footprint_mib": 18.703948974609375
+    },
+    {
+      "cycle": 5,
+      "active_footprint_mib": 18.578948974609375,
+      "paused_footprint_mib": 18.594573974609375
+    },
+    {
+      "cycle": 6,
+      "active_footprint_mib": 19.032073974609375,
+      "paused_footprint_mib": 19.469573974609375
+    },
+    {
+      "cycle": 7,
+      "active_footprint_mib": 18.907073974609375,
+      "paused_footprint_mib": 19.203948974609375
+    },
+    {
+      "cycle": 8,
+      "active_footprint_mib": 18.641448974609375,
+      "paused_footprint_mib": 18.735198974609375
+    },
+    {
+      "cycle": 9,
+      "active_footprint_mib": 18.657073974609375,
+      "paused_footprint_mib": 18.422698974609375
+    },
+    {
+      "cycle": 10,
+      "active_footprint_mib": 18.344573974609375,
+      "paused_footprint_mib": 18.360198974609375
+    }
+  ],
+  "limitation": "Repeated-cycle test, not a multi-day soak"
+}

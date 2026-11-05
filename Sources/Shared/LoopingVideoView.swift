@@ -15,18 +15,17 @@ final class LoopingVideoView: NSView {
     private var wantsPlayback = true
     private var resumeTarget: CMTime?
     private var seeking = false
-    private var prepared = false
+    private(set) var prepared = false
+    private var presentationNotified = false
+    private(set) var loadGeneration = 0
     private(set) var presented = false
     private(set) var timelineError: Double?
     var fadeInDuration: Double = 0
     private var resumeTimeline: PlaybackTimeline?
     private var presentationDeadline: Double?
     private var presentationScheduled = false
-    private var mediaURL: URL?
+    private var preparationGeneration = 0
     private var placeholder: CGImage?
-    private var stillGenerator: AVAssetImageGenerator?
-    private var stillTask: Task<Void, Never>?
-    private(set) var stillPreparing = false
     var hasPlaceholder: Bool { placeholder != nil }
 
     override init(frame frameRect: NSRect) {
@@ -46,7 +45,7 @@ final class LoopingVideoView: NSView {
         unload()
         setPlaceholder(still)
         CATransaction.commit()
-        mediaURL = url
+        loadGeneration += 1
         resumeTimeline = timeline
         resumeTarget = CMTime(seconds: seconds.isFinite ? max(0, seconds) : 0, preferredTimescale: 600)
         let item = AVPlayerItem(url: url)
@@ -56,6 +55,7 @@ final class LoopingVideoView: NSView {
         queue.volume = 0
         queue.preventsDisplaySleepDuringVideoPlayback = false
         queue.automaticallyWaitsToMinimizeStalling = false
+        queue.audiovisualBackgroundPlaybackPolicy = .continuesIfPossible
         let videoLayer = AVPlayerLayer(player: queue)
         videoLayer.videoGravity = .resizeAspectFill
         videoLayer.isOpaque = true
@@ -82,6 +82,19 @@ final class LoopingVideoView: NSView {
         restorePositionIfReady()
     }
 
+    func synchronize(to timeline: PlaybackTimeline) {
+        guard player != nil else { return }
+        player?.pause()
+        resumeTimeline = timeline
+        resumeTarget = .zero
+        prepared = false
+        seeking = false
+        presentationNotified = false
+        presentationDeadline = nil
+        presentationScheduled = false
+        restorePositionIfReady()
+    }
+
     func setPlaying(_ playing: Bool) {
         wantsPlayback = playing
         if playing {
@@ -99,13 +112,16 @@ final class LoopingVideoView: NSView {
         }
         resumeTarget = nil
         seeking = true
+        preparationGeneration += 1
+        let generation = preparationGeneration
         player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self, weak player] finished in
             DispatchQueue.main.async {
-                guard let self, let player, self.player === player else { return }
+                guard let self, let player, self.player === player, self.preparationGeneration == generation else { return }
                 guard finished else { return }
                 player.preroll(atRate: 1) { [weak self, weak player] ready in
                     DispatchQueue.main.async {
-                        guard let self, let player, self.player === player, ready else { return }
+                        guard let self, let player, self.player === player, ready,
+                              self.preparationGeneration == generation else { return }
                         self.seeking = false
                         self.prepared = true
                         self.presentIfReady()
@@ -123,8 +139,10 @@ final class LoopingVideoView: NSView {
                 guard !presentationScheduled else { return }
                 presentationScheduled = true
                 let currentPlayer = player
+                let generation = preparationGeneration
                 DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { [weak self, weak currentPlayer] in
-                    guard let self, let currentPlayer, self.player === currentPlayer else { return }
+                    guard let self, let currentPlayer, self.player === currentPlayer,
+                          self.preparationGeneration == generation else { return }
                     self.presentationScheduled = false
                     self.presentIfReady()
                 }
@@ -144,6 +162,10 @@ final class LoopingVideoView: NSView {
             }
             CATransaction.commit()
             presented = true
+            setPlaceholder(nil)
+        }
+        if !presentationNotified {
+            presentationNotified = true
             if let resumeTimeline, let actual = player?.currentTime().seconds {
                 let expected = resumeTimeline.position(at: CMClockGetTime(CMClockGetHostTimeClock()).seconds)
                 let delta = abs(actual - expected)
@@ -158,7 +180,7 @@ final class LoopingVideoView: NSView {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
         return CGImageSourceCreateThumbnailAtIndex(source, 0, [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceThumbnailMaxPixelSize: 640,
+            kCGImageSourceThumbnailMaxPixelSize: 4096,
             kCGImageSourceShouldCacheImmediately: true,
         ] as CFDictionary)
     }
@@ -171,14 +193,8 @@ final class LoopingVideoView: NSView {
         CATransaction.commit()
     }
 
-    func unload(preserveFrame: Bool = false) {
-        stillTask?.cancel()
-        stillTask = nil
-        stillGenerator?.cancelAllCGImageGeneration()
-        stillGenerator = nil
-        stillPreparing = false
-        let savedURL = mediaURL
-        let savedTime = player?.currentTime()
+    func unload() {
+        preparationGeneration += 1
         itemObservation?.invalidate()
         itemObservation = nil
         displayObservation?.invalidate()
@@ -200,23 +216,8 @@ final class LoopingVideoView: NSView {
         presentationDeadline = nil
         presentationScheduled = false
         failure = nil
-        if preserveFrame, let savedURL, let savedTime, savedTime.isNumeric {
-            let generator = AVAssetImageGenerator(asset: AVURLAsset(url: savedURL))
-            generator.appliesPreferredTrackTransform = true
-            generator.maximumSize = CGSize(width: 640, height: 640)
-            generator.requestedTimeToleranceBefore = .zero
-            generator.requestedTimeToleranceAfter = .zero
-            stillGenerator = generator
-            stillPreparing = true
-            stillTask = Task { @MainActor [weak self] in
-                let frame = try? await generator.image(at: savedTime)
-                guard let self, !Task.isCancelled, self.stillGenerator === generator else { return }
-                if let frame { self.setPlaceholder(frame.image) }
-                self.stillPreparing = false
-                self.stillGenerator = nil
-                self.stillTask = nil
-            }
-        } else if !preserveFrame { setPlaceholder(nil) }
+        presentationNotified = false
+        setPlaceholder(nil)
     }
 
     override func layout() {
@@ -228,8 +229,6 @@ final class LoopingVideoView: NSView {
     }
 
     deinit {
-        stillTask?.cancel()
-        stillGenerator?.cancelAllCGImageGeneration()
         itemObservation?.invalidate()
         displayObservation?.invalidate()
         player?.pause()

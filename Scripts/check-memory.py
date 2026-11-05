@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise repeated decoder teardown/resume and check for sustained footprint growth."""
+"""Exercise retained-player pause/resume and check for sustained footprint growth."""
 import argparse
 import json
 import statistics
@@ -41,6 +41,7 @@ def main():
         raise SystemExit(f"Playback is suspended by macOS ({initial_state}); run this app-wide test in an awake, unlocked session")
     was_paused = initial_state == "Paused"
     samples = []
+    loads = None
     try:
         command("--continuous-playback")
         for cycle in range(args.cycles):
@@ -53,13 +54,18 @@ def main():
                 if all(d["ready"] and d["rate"] == 1 for d in current["displays"]):
                     break
                 assert time.monotonic() < deadline, "Decoder did not resume"
+            current_loads = [d["load_generation"] for d in current["displays"]]
+            if loads is None: loads = current_loads
+            assert current_loads == loads, "Resume replaced the decoder"
             time.sleep(2)
             active_memory = footprint(pid)
             command("--pause")
             time.sleep(1)
             paused = state()
             assert paused["state"] == "Paused"
-            assert all(d["queue_items"] == 0 and d["rate"] == 0 for d in paused["displays"]), "Paused decoders were retained"
+            assert all(1 <= d["queue_items"] <= 3 and d["rate"] == 0 and d["presented"] and not d["placeholder"]
+                       for d in paused["displays"]), "Pause did not retain a sharp decoded frame"
+            assert [d["load_generation"] for d in paused["displays"]] == loads
             samples.append({"cycle": cycle + 1, "active_footprint_mib": active_memory,
                             "paused_footprint_mib": footprint(pid)})
     finally:
@@ -67,13 +73,13 @@ def main():
         command("--pause" if was_paused else "--resume")
     first = statistics.mean(s["paused_footprint_mib"] for s in samples[:5])
     last = statistics.mean(s["paused_footprint_mib"] for s in samples[-5:])
-    result = {"cycles": len(samples), "initial_paused_mean_mib": first, "final_paused_mean_mib": last,
+    result = {"mode": "Retained player", "cycles": len(samples), "initial_paused_mean_mib": first, "final_paused_mean_mib": last,
               "growth_mib": last - first,
               "mean_active_footprint_mib": statistics.mean(s["active_footprint_mib"] for s in samples),
               "samples": samples, "limitation": "Repeated-cycle test, not a multi-day soak"}
     Path("Benchmarks/memory-lifecycle.json").write_text(json.dumps(result, indent=2) + "\n")
     assert last - first < 8, f"Sustained paused footprint growth: {last - first:.2f} MiB"
-    assert last < 64, f"Paused footprint exceeded the test budget: {last:.2f} MiB"
+    assert last < 96 * len(loads), f"Paused footprint exceeded the test budget: {last:.2f} MiB"
     print(json.dumps({k: v for k, v in result.items() if k != "samples"}, indent=2))
 
 

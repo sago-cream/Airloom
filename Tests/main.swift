@@ -7,7 +7,7 @@ func expect(_ condition: @autoclosure () -> Bool, _ message: String) {
 var policy = PlaybackPolicy()
 expect(policy.shouldPlay, "A fresh session should play")
 policy.sessionInactive = true
-expect(!policy.shouldPlay, "A locked session must stop desktop decoding")
+expect(!policy.shouldPlay, "The foreground policy must report a locked session")
 policy.screenSaverActive = true
 policy.sessionInactive = false
 expect(!policy.shouldPlay, "Unlocking must not resume underneath an active screen saver")
@@ -22,6 +22,22 @@ policy.lowPowerMode = false
 expect(!policy.shouldPlay, "Leaving Low Power Mode must preserve manual pause")
 policy.userPaused = false
 expect(policy.shouldPlay, "Resume only after every pause condition clears")
+var warm = PlaybackPolicy()
+warm.sessionInactive = true
+expect(warm.shouldAnimate(visible: false, nativeLockScreen: true), "Native-lock mode prepares playback behind authentication")
+expect(!warm.shouldAnimate(visible: false, nativeLockScreen: false), "Without native lock playback the desktop stays paused")
+warm.screenSleeping = true
+expect(!warm.shouldAnimate(visible: false, nativeLockScreen: true), "Sleep stops decoding even during a lock")
+warm.screenSleeping = false
+warm.userPaused = true
+expect(!warm.shouldAnimate(visible: true, nativeLockScreen: true), "Manual pause overrides lock preparation")
+warm.userPaused = false
+warm.lowPowerMode = true
+expect(!warm.shouldAnimate(visible: true, nativeLockScreen: true), "Low Power Mode overrides lock preparation")
+warm.lowPowerMode = false
+warm.sessionInactive = false
+expect(!warm.shouldAnimate(visible: false, nativeLockScreen: true), "Covered playback pauses")
+expect(warm.shouldAnimate(visible: false, nativeLockScreen: true, unlockGrace: true), "Unlock keeps playback through the login-window fade")
 let settings = WallpaperSettings(sourcePath: "/a b/input.mp4", mediaPath: "/a b/video.mp4", title: "Video")
 let roundTrip = try JSONDecoder().decode(WallpaperSettings.self, from: JSONEncoder().encode(settings))
 expect(roundTrip.sourcePath == settings.sourcePath, "File paths must round trip intact")

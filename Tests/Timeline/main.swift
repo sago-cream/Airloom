@@ -44,6 +44,7 @@ Task { @MainActor in
         window.contentView = video
         window.orderBack(nil)
         var checks: [[String: Double]] = []
+        var identity: ObjectIdentifier?
         for rate in [0.0, 1.0] {
             let clock = PlaybackTimeline(mediaSeconds: min(12.25, duration / 2),
                                          hostSeconds: CMClockGetTime(CMClockGetHostTimeClock()).seconds,
@@ -53,10 +54,12 @@ Task { @MainActor in
                 presentation = (video.player!.currentTime().seconds,
                                 clock.position(at: CMClockGetTime(CMClockGetHostTimeClock()).seconds))
             }
-            video.setPlaying(false)
-            video.load(url: media, timeline: clock)
-            precondition(!video.presented, "Revealed a frame before seeking")
-            precondition(video.hasPlaceholder && video.layer?.contents != nil, "Decoder startup exposed an empty desktop")
+            if identity == nil {
+                video.setPlaying(false)
+                video.load(url: media, timeline: clock)
+                identity = ObjectIdentifier(video.player!)
+                precondition(!video.presented && video.hasPlaceholder)
+            } else { video.synchronize(to: clock) }
             video.setPlaying(true)
             let deadline = Date().addingTimeInterval(6)
             while presentation == nil {
@@ -64,23 +67,20 @@ Task { @MainActor in
                 try await Task.sleep(nanoseconds: 10_000_000)
             }
             let (actual, expected) = presentation!
-            print("Native rate \(rate): presented \(actual), expected \(expected)")
             precondition(abs(actual - expected) < 0.09, "Desktop did not align with the native clock")
+            precondition(ObjectIdentifier(video.player!) == identity && video.loadGeneration == 1,
+                         "Synchronization replaced the warm player")
+            precondition(!video.hasPlaceholder && video.presented && video.prepared,
+                         "Warm playback still depends on a poster")
             checks.append(["rate": rate, "presented_seconds": actual, "expected_seconds": expected])
-            video.unload(preserveFrame: true)
-            precondition(!video.presented && video.player == nil)
-            precondition(video.hasPlaceholder && video.layer?.contents != nil, "Decoder teardown exposed an empty desktop")
-            let stillDeadline = Date().addingTimeInterval(5)
-            while video.stillPreparing {
-                precondition(Date() < stillDeadline, "Still-image decoder was not released")
-                try await Task.sleep(nanoseconds: 20_000_000)
-            }
-            let image = video.layer!.contents as! CGImage
-            precondition(max(image.width, image.height) <= 640, "Retained an oversized still")
+            video.setPlaying(false)
+            let pausedAt = video.player!.currentTime().seconds
+            try await Task.sleep(nanoseconds: 200_000_000)
+            precondition(abs(video.player!.currentTime().seconds - pausedAt) < 0.02)
+            precondition(video.presented && video.prepared, "Pausing discarded the decoded frame")
         }
         video.onPresentationReady = nil
         video.unload()
-        precondition(!video.hasPlaceholder, "Final teardown retained the still image")
         window.close()
         var testSettings = settings
         testSettings.pauseWhenCovered = false
@@ -92,33 +92,47 @@ Task { @MainActor in
                          "Refreshed the system renderer before desktop presentation")
             refreshes += 1
         }
+        let initialReady = Date().addingTimeInterval(5)
+        while !(desktop.diagnostics()["displays"] as! [[String: Any]]).allSatisfy({ $0["prepared"] as? Bool == true }) {
+            precondition(Date() < initialReady)
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        let initialLoads = (desktop.diagnostics()["displays"] as! [[String: Any]]).map { $0["load_generation"] as! Int }
+        var changed = testSettings
+        changed.pauseWhenCovered = true
+        desktop.update(settings: changed)
+        desktop.update(settings: testSettings)
+        precondition((desktop.diagnostics()["displays"] as! [[String: Any]]).map { $0["load_generation"] as! Int } == initialLoads,
+                     "Changing a playback preference rebuilt the decoder")
         for cycle in SessionState.isLocked ? [] : [1, 2] {
             NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.sessionDidResignActiveNotification, object: nil)
+            try await Task.sleep(nanoseconds: 8_500_000_000)
+            if SessionState.isLocked { break }
             let locked = desktop.diagnostics()
             precondition(locked["state"] as? String == "Session locked")
-            precondition((locked["displays"] as! [[String: Any]]).allSatisfy { $0["queue_items"] as? Int == 0 })
-            precondition((locked["displays"] as! [[String: Any]]).allSatisfy { $0["placeholder"] as? Bool == true },
-                         "Locked desktop has no fallback content for the unlock transition")
-            try await Task.sleep(nanoseconds: 9_500_000_000)
+            let lockedDisplays = locked["displays"] as! [[String: Any]]
+            precondition(lockedDisplays.allSatisfy { ($0["rate"] as? Float) == 1 && $0["presented"] as? Bool == true },
+                         "Desktop was not already playing behind the lock screen")
+            NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+            let sleeping = desktop.diagnostics()["displays"] as! [[String: Any]]
+            precondition(sleeping.allSatisfy { ($0["rate"] as? Float) == 0 && $0["presented"] as? Bool == true },
+                         "Sleep must retain a sharp paused frame without playback")
+            NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
             NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
-            let deadline = Date().addingTimeInterval(5)
-            while refreshes < cycle {
-                precondition(Date() < deadline, "Handoff did not finish")
-                try await Task.sleep(nanoseconds: 20_000_000)
-            }
-            let state = desktop.diagnostics()
-            let handoff = (state["handoff"] as! [String: Any])["result"] as? String
-            precondition(handoff == "native_clock" || handoff == "fade_fallback")
-            for display in state["displays"] as! [[String: Any]] {
-                precondition(display["placeholder"] as? Bool == true)
-                if let error = display["timeline_error_seconds"] as? Double { precondition(error < 0.09) }
-            }
+            let returned = desktop.diagnostics()
+            let displays = returned["displays"] as! [[String: Any]]
+            precondition(displays.map { $0["load_generation"] as! Int } == initialLoads,
+                         "Unlock cold-loaded a replacement decoder")
+            precondition(displays.allSatisfy { ($0["rate"] as? Float) == 1 && $0["prepared"] as? Bool == true && $0["placeholder"] as? Bool == false },
+                         "Unlock did not immediately continue the prepared player")
+            precondition((returned["handoff"] as! [String: Any])["ready_before_unlock"] as? Bool == true)
+            precondition(refreshes == cycle, "Native renderer refresh did not wait for warm desktop playback")
         }
         desktop.onHandoffReady = nil
         desktop.stop()
         let result: [String: Any] = ["native_clock_available": native != nil, "checks": checks,
                                    "seek_before_presentation": true, "controller_handoff_cycles": refreshes,
-                                   "placeholder_covers_startup": true, "still_maximum_edge": 640,
+                                   "one_player_across_lock_sleep_unlock": true, "ready_before_unlock": true,
                                    "limitation": "Native-clock lookup and actual desktop controller; session events were simulated within this test process, not a real lock/unlock visual check"]
         try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
             .write(to: URL(fileURLWithPath: "Benchmarks/timeline-handoff.json"), options: .atomic)
