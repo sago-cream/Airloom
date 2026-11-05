@@ -1,0 +1,5 @@
+{
+  "outside_click_closed_menu": true,
+  "app_deactivation_closed_menu": true,
+  "monitor_removed_after_close": true
+}

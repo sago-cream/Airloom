@@ -20,6 +20,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var lockObservers: [NSObjectProtocol] = []
     private var loginItem: NSMenuItem?
     private var rendererRefresh: DispatchWorkItem?
+    private var menuTracking = false
+    private var outsideClickMonitor: Any?
+    private var deactivationObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -51,6 +54,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         item.button?.toolTip = "Torii — \(loaded.title)"
         item.menu = makeMenu()
         statusItem = item
+        deactivationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.dismissMenu() }
         commandObserver = DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("com.hsi.Torii.command"), object: nil, queue: .main
         ) { [weak self] notification in
@@ -99,10 +105,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return menu
     }
 
-    func menuWillOpen(_ menu: NSMenu) { updateState() }
-    func menuDidClose(_ menu: NSMenu) { releaseTemporaryMemory() }
+    func menuWillOpen(_ menu: NSMenu) {
+        menuTracking = true
+        updateState()
+        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) {
+            [weak self] _ in self?.dismissMenu()
+        }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        menuTracking = false
+        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
+        outsideClickMonitor = nil
+        releaseTemporaryMemory()
+    }
+
+    private func dismissMenu() {
+        guard menuTracking else { return }
+        statusItem?.menu?.cancelTracking()
+    }
 
     private func showMenu() {
+        guard !menuTracking else { return }
         updateState()
         guard let button = statusItem?.button, let menu = statusItem?.menu else { return }
         NSApp.activate(ignoringOtherApps: true)
@@ -169,6 +194,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         lockObservers.append(center.addObserver(forName: Notification.Name("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
             self?.sessionLocked = true
             self?.rendererRefresh?.cancel()
+            self?.dismissMenu()
         })
         lockObservers.append(center.addObserver(forName: Notification.Name("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }
@@ -222,7 +248,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self.importItem?.isEnabled = true
             self.updateState()
             self.releaseTemporaryMemory()
-            DispatchQueue.main.async { self.showMenu() }
         }
     }
 
@@ -262,6 +287,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         diagnostics["lock_screen"] = ["enabled": settings?.lockScreenSlotID != nil,
                                       "busy": lockScreenBusy, "slot_id": settings?.lockScreenSlotID ?? "",
                                       "error": lockScreenError]
+        diagnostics["menu"] = ["tracking": menuTracking, "outside_click_monitor": outsideClickMonitor != nil]
         guard let data = try? JSONSerialization.data(withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]) else { return }
         try? data.write(to: WallpaperSettings.supportURL.appendingPathComponent("status.json"), options: .atomic)
     }
@@ -275,6 +301,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        dismissMenu()
+        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
+        outsideClickMonitor = nil
+        if let deactivationObserver { NotificationCenter.default.removeObserver(deactivationObserver) }
         controller?.stop()
         rendererRefresh?.cancel()
         for token in lockObservers { DistributedNotificationCenter.default().removeObserver(token) }
