@@ -9,6 +9,9 @@ on:
         required: true
         type: string
   workflow_call:
+    secrets:
+      HOMEBREW_TAP_TOKEN:
+        required: true
     inputs:
       tag:
         required: true

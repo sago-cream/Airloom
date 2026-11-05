@@ -156,5 +156,7 @@ jobs:
     needs: release
     if: inputs.publish && needs.release.outputs.assets_ready == 'true'
     uses: ./.github/workflows/homebrew.yml
+    secrets:
+      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
     with:
       tag: ${{ inputs.tag }}
