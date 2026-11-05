@@ -114,5 +114,6 @@ PY
 embedded_key="$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "$app/Contents/Info.plist")"
 xcrun swift Scripts/verify-update.swift "$archive" "$embedded_key" "$signature"
 (cd "$output" && shasum -a 256 "Airloom-$AIRLOOM_VERSION.zip" appcast.xml > SHA256SUMS)
+python3 Scripts/homebrew.py generate --archive "$archive" --version "$AIRLOOM_VERSION" --output "$output/airloom.rb"
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then echo "assets=$output" >> "$GITHUB_OUTPUT"; fi
 echo "Verified release assets: $output"
