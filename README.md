@@ -27,8 +27,6 @@ brew install --cask sago-cream/tap/airloom
 
 Or download a signed and notarized ZIP from [GitHub Releases](https://github.com/sago-cream/Airloom/releases), extract **Airloom.app**, and move it to Applications.
 
-**Release availability:** the first public release is still being prepared. Homebrew installation becomes available after the matching release is published and the cask is merged into the tap. Draft releases are not public downloads.
-
 Requirements:
 
 - macOS 15 Sequoia or later, on Apple Silicon or Intel
