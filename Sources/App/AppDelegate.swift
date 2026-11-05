@@ -25,8 +25,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var loginItem: NSMenuItem?
     private var rendererRefresh: DispatchWorkItem?
     private var menuTracking = false
-    private var outsideClickMonitor: Any?
-    private var deactivationObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -49,9 +47,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         item.button?.action = #selector(toggleMenu)
         item.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
         statusItem = item
-        deactivationObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
-        ) { [weak self] _ in self?.dismissMenu() }
         commandObserver = DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("com.hsi.Torii.command"), object: nil, queue: .main
         ) { [weak self] notification in
@@ -121,16 +116,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         menuTracking = true
         updateState()
-        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
-        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) {
-            [weak self] _ in self?.dismissMenu()
-        }
     }
 
     func menuDidClose(_ menu: NSMenu) {
         menuTracking = false
-        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
-        outsideClickMonitor = nil
         releaseTemporaryMemory()
     }
 
@@ -309,7 +298,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         diagnostics["lock_screen"] = ["enabled": settings?.lockScreenSlotID != nil,
                                       "busy": lockScreenBusy, "slot_id": settings?.lockScreenSlotID ?? "",
                                       "error": lockScreenError]
-        diagnostics["menu"] = ["tracking": menuTracking, "outside_click_monitor": outsideClickMonitor != nil]
+        diagnostics["menu"] = ["tracking": menuTracking]
         guard let data = try? JSONSerialization.data(withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]) else { return }
         try? data.write(to: WallpaperSettings.supportURL.appendingPathComponent("status.json"), options: .atomic)
     }
@@ -324,9 +313,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         dismissMenu()
-        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
-        outsideClickMonitor = nil
-        if let deactivationObserver { NotificationCenter.default.removeObserver(deactivationObserver) }
         controller?.stop()
         rendererRefresh?.cancel()
         for token in lockObservers { DistributedNotificationCenter.default().removeObserver(token) }
