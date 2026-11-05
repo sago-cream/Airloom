@@ -22,6 +22,8 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 45
     environment: release
+    outputs:
+      assets_ready: ${{ steps.package.outputs.assets != '' }}
     permissions:
       contents: write
       actions: read
@@ -51,6 +53,8 @@ jobs:
           git fetch origin "refs/tags/$RELEASE_TAG"
           [[ "$(git rev-parse "FETCH_HEAD^{commit}")" == "$(git rev-parse HEAD)" ]] || { echo "Remote tag changed"; exit 1; }
           [[ "$GITHUB_SHA" == "$(git rev-parse HEAD)" ]] || { echo 'Dispatch this workflow from the release tag with --ref'; exit 1; }
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main || { echo 'Release a commit that has been merged to main'; exit 1; }
           if gh release view "$RELEASE_TAG" --json isDraft > "$RUNNER_TEMP/release.json"; then
             python3 -c 'import json,sys; assert json.load(open(sys.argv[1]))["isDraft"], "Public releases cannot be overwritten"' "$RUNNER_TEMP/release.json"
           fi
@@ -129,7 +133,7 @@ jobs:
           fi
           [[ "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" == true ]]
           [[ "$(git ls-remote origin "refs/tags/$RELEASE_TAG" "refs/tags/$RELEASE_TAG^{}" | tail -1 | cut -f1)" == "$(git rev-parse HEAD)" ]]
-          gh release upload "$RELEASE_TAG" "$ASSETS/Airloom-${RELEASE_TAG#v}.zip" "$ASSETS/appcast.xml" "$ASSETS/SHA256SUMS" --clobber
+          gh release upload "$RELEASE_TAG" "$ASSETS/Airloom-${RELEASE_TAG#v}.zip" "$ASSETS/appcast.xml" "$ASSETS/SHA256SUMS" "$ASSETS/airloom.rb" --clobber
       - name: Publish verified release
         if: inputs.publish && steps.package.outputs.assets != ''
         run: gh release edit "$RELEASE_TAG" --draft=false --latest
@@ -148,3 +152,9 @@ jobs:
           for name in ('sparkle.key', 'keychain-password', 'developer-id.p12'):
               (p / name).unlink(missing_ok=True)
           PY
+  homebrew:
+    needs: release
+    if: inputs.publish && needs.release.outputs.assets_ready == 'true'
+    uses: ./.github/workflows/homebrew.yml
+    with:
+      tag: ${{ inputs.tag }}
