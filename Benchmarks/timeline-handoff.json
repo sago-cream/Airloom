@@ -6,13 +6,15 @@
       "rate" : 0
     },
     {
-      "expected_seconds" : 12.381441415986046,
-      "presented_seconds" : 12.37785,
+      "expected_seconds" : 12.379682250088081,
+      "presented_seconds" : 12.379066666666667,
       "rate" : 1
     }
   ],
   "controller_handoff_cycles" : 2,
-  "limitation" : "Actual native-clock reads and desktop controller; session events were simulated within this test process, not a real lock\/unlock visual check",
-  "native_clock_available" : true,
-  "seek_before_presentation" : true
+  "limitation" : "Native-clock lookup and actual desktop controller; session events were simulated within this test process, not a real lock\/unlock visual check",
+  "native_clock_available" : false,
+  "placeholder_covers_startup" : true,
+  "seek_before_presentation" : true,
+  "still_maximum_edge" : 640
 }

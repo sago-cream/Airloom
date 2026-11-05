@@ -38,6 +38,9 @@ Task { @MainActor in
         window.isReleasedWhenClosed = false
         window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)) + 1)
         let video = LoopingVideoView(frame: NSRect(x: 0, y: 0, width: 320, height: 180))
+        let poster = URL(fileURLWithPath: settings.posterPath ?? WallpaperSettings.posterURL.path)
+        video.setPlaceholder(LoopingVideoView.placeholder(from: poster))
+        precondition(video.hasPlaceholder, "No still image covers decoder startup")
         window.contentView = video
         window.orderBack(nil)
         var checks: [[String: Double]] = []
@@ -53,6 +56,7 @@ Task { @MainActor in
             video.setPlaying(false)
             video.load(url: media, timeline: clock)
             precondition(!video.presented, "Revealed a frame before seeking")
+            precondition(video.hasPlaceholder && video.layer?.contents != nil, "Decoder startup exposed an empty desktop")
             video.setPlaying(true)
             let deadline = Date().addingTimeInterval(6)
             while presentation == nil {
@@ -63,10 +67,20 @@ Task { @MainActor in
             print("Native rate \(rate): presented \(actual), expected \(expected)")
             precondition(abs(actual - expected) < 0.09, "Desktop did not align with the native clock")
             checks.append(["rate": rate, "presented_seconds": actual, "expected_seconds": expected])
-            video.unload()
+            video.unload(preserveFrame: true)
             precondition(!video.presented && video.player == nil)
+            precondition(video.hasPlaceholder && video.layer?.contents != nil, "Decoder teardown exposed an empty desktop")
+            let stillDeadline = Date().addingTimeInterval(5)
+            while video.stillPreparing {
+                precondition(Date() < stillDeadline, "Still-image decoder was not released")
+                try await Task.sleep(nanoseconds: 20_000_000)
+            }
+            let image = video.layer!.contents as! CGImage
+            precondition(max(image.width, image.height) <= 640, "Retained an oversized still")
         }
         video.onPresentationReady = nil
+        video.unload()
+        precondition(!video.hasPlaceholder, "Final teardown retained the still image")
         window.close()
         var testSettings = settings
         testSettings.pauseWhenCovered = false
@@ -78,11 +92,13 @@ Task { @MainActor in
                          "Refreshed the system renderer before desktop presentation")
             refreshes += 1
         }
-        for cycle in 1...2 {
+        for cycle in SessionState.isLocked ? [] : [1, 2] {
             NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.sessionDidResignActiveNotification, object: nil)
             let locked = desktop.diagnostics()
             precondition(locked["state"] as? String == "Session locked")
             precondition((locked["displays"] as! [[String: Any]]).allSatisfy { $0["queue_items"] as? Int == 0 })
+            precondition((locked["displays"] as! [[String: Any]]).allSatisfy { $0["placeholder"] as? Bool == true },
+                         "Locked desktop has no fallback content for the unlock transition")
             try await Task.sleep(nanoseconds: 9_500_000_000)
             NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
             let deadline = Date().addingTimeInterval(5)
@@ -91,16 +107,19 @@ Task { @MainActor in
                 try await Task.sleep(nanoseconds: 20_000_000)
             }
             let state = desktop.diagnostics()
-            precondition((state["handoff"] as! [String: Any])["result"] as? String == "native_clock")
+            let handoff = (state["handoff"] as! [String: Any])["result"] as? String
+            precondition(handoff == "native_clock" || handoff == "fade_fallback")
             for display in state["displays"] as! [[String: Any]] {
-                precondition((display["timeline_error_seconds"] as? Double ?? 100) < 0.09)
+                precondition(display["placeholder"] as? Bool == true)
+                if let error = display["timeline_error_seconds"] as? Double { precondition(error < 0.09) }
             }
         }
         desktop.onHandoffReady = nil
         desktop.stop()
         let result: [String: Any] = ["native_clock_available": native != nil, "checks": checks,
                                    "seek_before_presentation": true, "controller_handoff_cycles": refreshes,
-                                   "limitation": "Actual native-clock reads and desktop controller; session events were simulated within this test process, not a real lock/unlock visual check"]
+                                   "placeholder_covers_startup": true, "still_maximum_edge": 640,
+                                   "limitation": "Native-clock lookup and actual desktop controller; session events were simulated within this test process, not a real lock/unlock visual check"]
         try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
             .write(to: URL(fileURLWithPath: "Benchmarks/timeline-handoff.json"), options: .atomic)
         print("Verified native timing parser, stale-clock rejection, and synchronized presentation")

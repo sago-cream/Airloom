@@ -13,6 +13,7 @@ window.isOpaque = false
 window.backgroundColor = .clear
 window.isReleasedWhenClosed = false
 let video = LoopingVideoView(frame: NSRect(x: 0, y: 0, width: 320, height: 180))
+video.setPlaceholder(LoopingVideoView.placeholder(from: URL(fileURLWithPath: settings.posterPath ?? WallpaperSettings.posterURL.path)))
 window.contentView = video
 window.orderBack(nil)
 
@@ -49,10 +50,11 @@ Task { @MainActor in
             try await Task.sleep(nanoseconds: 1_000_000_000)
             let activeFootprint = footprintMiB()
             nextPosition = video.player!.currentTime().seconds.truncatingRemainder(dividingBy: duration)
-            video.unload()
+            video.unload(preserveFrame: true)
             precondition(video.player == nil && video.layer?.sublayers?.isEmpty != false,
                          "Playback resources remained attached after teardown")
             try await Task.sleep(nanoseconds: 600_000_000)
+            precondition(video.hasPlaceholder && !video.stillPreparing, "Still image was not ready after decoder teardown")
             malloc_zone_pressure_relief(nil, 0)
             samples.append(["cycle": Double(cycle), "active_footprint_mib": activeFootprint,
                             "paused_footprint_mib": footprintMiB()])
@@ -66,6 +68,8 @@ Task { @MainActor in
             .write(to: URL(fileURLWithPath: "Benchmarks/decoder-memory-lifecycle.json"), options: .atomic)
         precondition(last - first < 8 && last < 64, "Decoder footprint grew beyond the test budget")
         print("Verified 20 real decoder load/seek/play/unload cycles; paused footprint growth \(String(format: "%.2f", last - first)) MiB")
+        video.unload()
+        precondition(!video.hasPlaceholder)
         window.close()
         app.terminate(nil)
     } catch {

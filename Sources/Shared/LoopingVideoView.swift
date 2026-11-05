@@ -1,5 +1,6 @@
 import AppKit
 import AVFoundation
+import ImageIO
 
 /// AVFoundation owns decoding and presentation; there is no application frame timer.
 final class LoopingVideoView: NSView {
@@ -21,18 +22,31 @@ final class LoopingVideoView: NSView {
     private var resumeTimeline: PlaybackTimeline?
     private var presentationDeadline: Double?
     private var presentationScheduled = false
+    private var mediaURL: URL?
+    private var placeholder: CGImage?
+    private var stillGenerator: AVAssetImageGenerator?
+    private var stillTask: Task<Void, Never>?
+    private(set) var stillPreparing = false
+    var hasPlaceholder: Bool { placeholder != nil }
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
-        // The desktop's matching system wallpaper stays visible before decoding starts.
         layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.contentsGravity = .resizeAspectFill
+        layer?.masksToBounds = true
     }
 
     required init?(coder: NSCoder) { nil }
 
     func load(url: URL, resumeAt seconds: Double = 0, timeline: PlaybackTimeline? = nil) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        let still = placeholder
         unload()
+        setPlaceholder(still)
+        CATransaction.commit()
+        mediaURL = url
         resumeTimeline = timeline
         resumeTarget = CMTime(seconds: seconds.isFinite ? max(0, seconds) : 0, preferredTimescale: 600)
         let item = AVPlayerItem(url: url)
@@ -140,7 +154,31 @@ final class LoopingVideoView: NSView {
         if wantsPlayback { player?.play() }
     }
 
-    func unload() {
+    static func placeholder(from url: URL) -> CGImage? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: 640,
+            kCGImageSourceShouldCacheImmediately: true,
+        ] as CFDictionary)
+    }
+
+    func setPlaceholder(_ image: CGImage?) {
+        placeholder = image
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer?.contents = image
+        CATransaction.commit()
+    }
+
+    func unload(preserveFrame: Bool = false) {
+        stillTask?.cancel()
+        stillTask = nil
+        stillGenerator?.cancelAllCGImageGeneration()
+        stillGenerator = nil
+        stillPreparing = false
+        let savedURL = mediaURL
+        let savedTime = player?.currentTime()
         itemObservation?.invalidate()
         itemObservation = nil
         displayObservation?.invalidate()
@@ -162,6 +200,23 @@ final class LoopingVideoView: NSView {
         presentationDeadline = nil
         presentationScheduled = false
         failure = nil
+        if preserveFrame, let savedURL, let savedTime, savedTime.isNumeric {
+            let generator = AVAssetImageGenerator(asset: AVURLAsset(url: savedURL))
+            generator.appliesPreferredTrackTransform = true
+            generator.maximumSize = CGSize(width: 640, height: 640)
+            generator.requestedTimeToleranceBefore = .zero
+            generator.requestedTimeToleranceAfter = .zero
+            stillGenerator = generator
+            stillPreparing = true
+            stillTask = Task { @MainActor [weak self] in
+                let frame = try? await generator.image(at: savedTime)
+                guard let self, !Task.isCancelled, self.stillGenerator === generator else { return }
+                if let frame { self.setPlaceholder(frame.image) }
+                self.stillPreparing = false
+                self.stillGenerator = nil
+                self.stillTask = nil
+            }
+        } else if !preserveFrame { setPlaceholder(nil) }
     }
 
     override func layout() {
@@ -173,6 +228,8 @@ final class LoopingVideoView: NSView {
     }
 
     deinit {
+        stillTask?.cancel()
+        stillGenerator?.cancelAllCGImageGeneration()
         itemObservation?.invalidate()
         displayObservation?.invalidate()
         player?.pause()

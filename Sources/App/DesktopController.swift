@@ -223,6 +223,8 @@ final class DesktopController {
 
     private func rebuildSurfaces() {
         stop()
+        let posterURL = settings.posterPath.map { URL(fileURLWithPath: $0) } ?? WallpaperSettings.posterURL
+        let poster = autoreleasepool { LoopingVideoView.placeholder(from: posterURL) }
         for screen in NSScreen.screens {
             let window = WallpaperWindow(
                 contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false
@@ -237,6 +239,7 @@ final class DesktopController {
             window.isExcludedFromWindowsMenu = true
             window.title = "Torii Wallpaper"
             let view = LoopingVideoView(frame: NSRect(origin: .zero, size: screen.frame.size))
+            view.setPlaceholder(poster)
             view.onFailure = { [weak self] in self?.onStateChange?() }
             view.onPresentationReady = { [weak self] in self?.applyPolicy() }
             window.contentView = view
@@ -256,7 +259,7 @@ final class DesktopController {
                 if let player = surface.video.player {
                     let time = player.currentTime().seconds
                     if time.isFinite { surface.resumeSeconds = time }
-                    surface.video.unload()
+                    surface.video.unload(preserveFrame: true)
                     releasedResources = true
                 }
             } else {
@@ -353,6 +356,7 @@ final class DesktopController {
                     "queue_items": player?.items().count ?? 0,
                     "ready": player?.currentItem?.status == .readyToPlay,
                     "presented": surface.video.presented,
+                    "placeholder": surface.video.hasPlaceholder,
                     "error": surface.video.failure ?? "",
                     "window_level": surface.window.level.rawValue,
                     "visible": isVisible(surface),
