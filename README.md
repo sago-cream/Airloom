@@ -39,6 +39,8 @@ Requirements:
 2. Choose an MP4 when prompted, or use **Import Video…** from the sparkle menu.
 3. Optionally enable **Start at Login** or **Pause When Desktop Is Covered**.
 
+To run without a menu-bar icon, hold **Command** and drag the sparkle icon out of the menu bar. Wallpaper playback continues, and the icon stays hidden across launches. Open Airloom again from Applications to restore the icon and its menu.
+
 Airloom fills each display while preserving the video’s aspect ratio. A mismatched shape is center-cropped, small videos are enlarged, and rotation metadata is preserved. Import does not reduce resolution or frame rate. Fit modes and custom crop positions are not currently available.
 
 ## Lock Screen
@@ -111,7 +113,7 @@ python3 Scripts/check-lock-screen.py --restore-cycle
 
 Keep the desktop visible for playback checks. The restore-cycle check changes and restores the native slot without locking the Mac.
 
-The executable supports `--show`, `--pause`, `--resume`, `--snapshot`, `--quit`, `--continuous-playback`, `--efficient-playback`, `--enable-lock-screen`, and `--disable-lock-screen`. Snapshots are written to `~/Library/Application Support/Torii/status.json`.
+The executable supports `--show`, `--hide-menu-bar-icon`, `--pause`, `--resume`, `--snapshot`, `--quit`, `--continuous-playback`, `--efficient-playback`, `--enable-lock-screen`, and `--disable-lock-screen`. `--show` restores a hidden menu-bar icon. Snapshots are written to `~/Library/Application Support/Torii/status.json`.
 
 </details>
 
