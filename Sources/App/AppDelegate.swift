@@ -1,7 +1,6 @@
 import AppKit
 import ServiceManagement
 import UniformTypeIdentifiers
-import ImageIO
 import Darwin
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
@@ -20,8 +19,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var lockScreenError = ""
     private var sessionLocked = false
     private var lockObservers: [NSObjectProtocol] = []
-    private var rendererRefresh: DispatchWorkItem?
     private var loginCheckbox: NSButton?
+    private var rendererRefresh: DispatchWorkItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -38,6 +37,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         observeLockLifecycle()
         controller = DesktopController(settings: loaded)
         controller?.onStateChange = { [weak self] in self?.updateState() }
+        controller?.onHandoffReady = { [weak self] in
+            guard let self else { return }
+            self.rendererRefresh?.cancel()
+            let refresh = DispatchWorkItem { [weak self] in
+                guard let self, !self.sessionLocked, self.settings?.lockScreenSlotID != nil else { return }
+                LockScreenInstaller.reload(includeAgent: false)
+            }
+            self.rendererRefresh = refresh
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: refresh)
+        }
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = NSImage(systemSymbolName: "mountain.2", accessibilityDescription: "Torii wallpaper")
         item.button?.toolTip = "Torii — \(loaded.title)"
@@ -116,6 +125,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 }
                 try updated.save()
                 self.settings = updated
+                self.controller?.update(settings: updated)
                 if !self.sessionLocked { LockScreenInstaller.reload(includeAgent: true) }
             } catch {
                 self.lockScreenError = error.localizedDescription
@@ -138,13 +148,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         lockObservers.append(center.addObserver(forName: Notification.Name("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }
             self.sessionLocked = false
-            self.rendererRefresh?.cancel()
-            let work = DispatchWorkItem { [weak self] in
-                guard let self, !self.sessionLocked, self.settings?.lockScreenSlotID != nil else { return }
-                LockScreenInstaller.reload(includeAgent: false)
-            }
-            self.rendererRefresh = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: work)
         })
     }
 
@@ -216,7 +219,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         guard let button = statusItem?.button else { return }
         if popover.isShown { updateState(); return }
         let viewController = NSViewController()
-        let root = NSView(frame: NSRect(x: 0, y: 0, width: 380, height: 464))
+        let root = NSView(frame: NSRect(x: 0, y: 0, width: 348, height: 232))
         viewController.view = root
         let stack = NSStackView()
         stack.orientation = .vertical
@@ -229,26 +232,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             stack.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -16),
             stack.topAnchor.constraint(equalTo: root.topAnchor, constant: 16),
         ])
-        let poster = NSImageView()
-        let posterURL = settings?.posterPath.map { URL(fileURLWithPath: $0) } ?? WallpaperSettings.posterURL
-        if let source = CGImageSourceCreateWithURL(posterURL as CFURL, nil),
-           let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-                kCGImageSourceCreateThumbnailFromImageAlways: true,
-                kCGImageSourceThumbnailMaxPixelSize: 800,
-                kCGImageSourceShouldCacheImmediately: true,
-           ] as CFDictionary) {
-            poster.image = NSImage(cgImage: image, size: .zero)
-        }
-        poster.imageScaling = .scaleProportionallyUpOrDown
-        poster.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        poster.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
-        poster.wantsLayer = true
-        poster.layer?.cornerRadius = 8
-        poster.layer?.masksToBounds = true
-        poster.setAccessibilityLabel("Current wallpaper preview")
-        stack.addArrangedSubview(poster)
-        poster.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        poster.heightAnchor.constraint(equalToConstant: 196).isActive = true
         let caption = NSStackView()
         caption.orientation = .vertical
         caption.alignment = .leading
@@ -257,7 +240,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         heading.font = .systemFont(ofSize: 15, weight: .semibold)
         heading.lineBreakMode = .byTruncatingMiddle
         heading.maximumNumberOfLines = 1
-        heading.widthAnchor.constraint(lessThanOrEqualToConstant: 348).isActive = true
+        heading.widthAnchor.constraint(lessThanOrEqualToConstant: 316).isActive = true
         caption.addArrangedSubview(heading)
         let state = NSTextField(labelWithString: controller?.state ?? "Starting")
         state.font = .systemFont(ofSize: 12)
@@ -367,8 +350,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         controller?.stop()
-        popover.performClose(nil)
         rendererRefresh?.cancel()
+        popover.performClose(nil)
         for token in lockObservers { DistributedNotificationCenter.default().removeObserver(token) }
         if let commandObserver { DistributedNotificationCenter.default().removeObserver(commandObserver) }
     }

@@ -25,18 +25,20 @@ Installation saves the original screen-saver preference and wallpaper index unde
 
 ## Playback and resource use
 
-- AVFoundation streams the original video into an `AVPlayerLayer`. No application code draws or copies video frames, and no application frame timer runs.
+- AVFoundation streams the original video into an `AVPlayerLayer`. Continuous playback uses no application frame timer or frame copying.
 - Each display has one player with a bounded `AVPlayerLooper` queue. Switching displays or videos tears down the previous players, items, observers, and layers.
 - Hidden and paused desktop players release their queues, layers, and decoder resources. Resuming reloads at the saved playback position. Native window-occlusion events are supplemented by a coalesced three-second check of public window geometry, without requesting Accessibility or Screen Recording access.
 - Locking the session, starting the system screen saver, and sleeping displays release desktop decoding resources. Waking and unlocking resume only after all pause conditions clear. Low Power Mode and manual pause are respected independently. Startup also checks the current session lock state.
-- The popover downsamples its preview and releases the view hierarchy when closed. It does not retain a separate settings window or full-resolution preview.
+- A single controls-only popover releases its view hierarchy when closed. There is no preview or separate settings window.
 - A screen-saver bundle carries its own silent video so the system host does not need access to Documents. Import prepares and signs a replacement bundle before activating it.
 
 ## Lock screen
 
 On macOS 26+, Torii uses the system's aerial-video pipeline for the actual logged-in session's lock-screen background. This was verified against the real `loginwindow` surface while the desktop player was unloaded. Authentication stays with macOS. Pre-login and FileVault screens remain system-controlled.
 
-Torii prepares a video-only MOV by repeating the original encoded video to at least ten minutes, without reducing resolution or frame rate. macOS's aerial renderer does not loop indefinitely: the repeated file covers the configured display-sleep interval, then can stop at its end if the display is kept awake. The renderer is refreshed after unlocking for the next lock; it is not restarted mid-lock.
+Torii prepares a video-only MOV by repeating the original encoded video to at least ten minutes, without reducing resolution or frame rate. macOS's aerial renderer does not loop indefinitely: the repeated file covers the configured display-sleep interval, then can stop at its end if the display is kept awake.
+
+During a lock, Torii reads the native renderer's media and monotonic host clock. On unlock, it maps that clock into the original clip's loop, seeks and prerolls, then schedules the first desktop frame on the same timeline. It refreshes the system renderer for the next lock only after the desktop video is presented or covered by other windows. Timing reads use short-lived system-log queries, with no permanent helper or extra decoding while locked. The timing format is undocumented; if it is unavailable, Torii uses a brief fade instead. Continuity needs a live check on each supported macOS/display configuration.
 
 The movie replaces one already-downloaded aerial slot under `~/Library/Application Support/com.apple.wallpaper/aerials/videos`. The previous movie and wallpaper configuration are saved under `~/Library/Application Support/Torii/Backups/LockScreen`. Restore recovers the movie byte-for-byte and preserves later wallpaper selections that no longer use Torii's slot. System Settings retains the original aerial's name and catalog thumbnail.
 
@@ -57,6 +59,9 @@ python3 Scripts/check-lock-screen.py --restore-cycle
 
 # Exercise decoder teardown and saved-position resume even without an unlocked UI.
 zsh Scripts/test.sh --memory
+
+# Check native clock parsing and scheduled desktop presentation.
+zsh Scripts/test.sh --timeline
 
 # Sample CPU time and physical footprint for a PID and its descendants.
 python3 Scripts/measure.py PID --seconds 90 --label 'Visible playback' --output Benchmarks/run.json

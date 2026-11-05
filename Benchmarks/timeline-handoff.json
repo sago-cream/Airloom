@@ -1,0 +1,18 @@
+{
+  "checks" : [
+    {
+      "expected_seconds" : 12.25,
+      "presented_seconds" : 12.25,
+      "rate" : 0
+    },
+    {
+      "expected_seconds" : 12.381441415986046,
+      "presented_seconds" : 12.37785,
+      "rate" : 1
+    }
+  ],
+  "controller_handoff_cycles" : 2,
+  "limitation" : "Actual native-clock reads and desktop controller; session events were simulated within this test process, not a real lock\/unlock visual check",
+  "native_clock_available" : true,
+  "seek_before_presentation" : true
+}

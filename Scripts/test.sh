@@ -17,9 +17,15 @@ elif [[ "${1:-}" == "--screen-saver" ]]; then
   xcrun swiftc -O -swift-version 5 Tests/ScreenSaver/main.swift \
     -framework AppKit -framework AVFoundation -framework ScreenSaver -o build/tests/screen-saver
   build/tests/screen-saver
+elif [[ "${1:-}" == "--timeline" ]]; then
+  xcrun swiftc -O -swift-version 5 -target arm64-apple-macos15.0 \
+    Sources/Shared/*.swift Sources/App/DesktopController.swift \
+    Sources/App/LockScreenTimeline.swift Tests/Timeline/main.swift \
+    -framework AppKit -framework AVFoundation -o build/tests/timeline
+  build/tests/timeline
 elif [[ "${1:-}" == "--memory" ]]; then
   xcrun swiftc -O -swift-version 5 -target arm64-apple-macos15.0 \
-    Sources/Shared/WallpaperSettings.swift Sources/Shared/LoopingVideoView.swift Tests/Memory/main.swift \
+    Sources/Shared/WallpaperSettings.swift Sources/Shared/PlaybackTimeline.swift Sources/Shared/LoopingVideoView.swift Tests/Memory/main.swift \
     -framework AppKit -framework AVFoundation -o build/tests/memory
   build/tests/memory
 fi
