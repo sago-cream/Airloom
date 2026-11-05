@@ -7,7 +7,6 @@ Your own videos, on your Mac’s desktop and lock screen.
 
 <a href="https://github.com/sago-cream/Airloom/releases">Releases</a>
  · <a href="#install">Install with Homebrew</a>
- · <a href="Docs/Playback.md">How playback works</a>
 </div>
 
 ## Why
@@ -52,7 +51,18 @@ Airloom saves the original video and wallpaper configuration before replacing th
 
 The animation applies to your logged-in session’s lock screen. Authentication, pre-login, and FileVault screens stay controlled by macOS. Native renderer framing may differ from the desktop crop.
 
-[Playback details and limits](Docs/Playback.md) explain the retained player, shared timing, backup locations, and ten-minute native video. [Recorded measurements](Benchmarks/README.md) include CPU and memory comparisons and their limits.
+Airloom prepares at least ten minutes of repeated original video for the native renderer. macOS may stop at the movie's end if the display stays awake longer. [Recorded measurements](Benchmarks/README.md) include CPU and memory comparisons and their limits.
+
+<details>
+<summary>Playback and recovery details</summary>
+
+AVFoundation streams into a player layer, retaining one player per display with a bounded looping queue. Pause keeps the decoded frame ready. With lock-screen animation enabled, the desktop player can keep playing behind authentication while the display is awake. Native clock samples align it while locked; unlock performs no log query, decoder replacement, or poster swap. The clock format is undocumented, so the desktop continues on its own clock when timing is unavailable.
+
+Normal lock/unlock, display sleep, and the first unlock after full system sleep were checked on the development Mac. Other macOS and display configurations still need their own checks.
+
+Original aerials and configuration are backed up in `~/Library/Application Support/Torii/Backups/LockScreen`. Restore recovers the movie byte-for-byte and preserves later wallpaper selections that no longer use Airloom's slot. Airloom retains Torii's bundle identifier and support directory for existing installations. Imported media stays outside the signed app and screen-saver bundles.
+
+</details>
 
 ## Privacy
 
@@ -87,7 +97,27 @@ open ~/Applications/Airloom.app
 
 Local builds use an ad-hoc signature by default. Set `UNIVERSAL=1` to build for Apple Silicon and Intel. Quit a running copy before replacing it.
 
-See [contributing](CONTRIBUTING.md), [integration checks and commands](Docs/Development.md), and [releasing](Docs/Releasing.md) for the complete workflows.
+<details>
+<summary>Integration checks and commands</summary>
+
+These optional checks require an active macOS desktop. Playback, timeline, and memory checks use the configured wallpaper; import takes the specified MP4.
+
+```sh
+zsh Scripts/test.sh --import /absolute/path/to/video.mp4
+zsh Scripts/test.sh --screen-saver
+zsh Scripts/test.sh --timeline
+zsh Scripts/test.sh --memory
+python3 Scripts/check-playback.py --seconds 90
+python3 Scripts/check-lock-screen.py --restore-cycle
+```
+
+Keep the desktop visible for playback checks. The restore-cycle check changes and restores the native slot without locking the Mac.
+
+The executable supports `--show`, `--pause`, `--resume`, `--snapshot`, `--quit`, `--continuous-playback`, `--efficient-playback`, `--enable-lock-screen`, and `--disable-lock-screen`. Snapshots are written to `~/Library/Application Support/Torii/status.json`.
+
+</details>
+
+See [Releasing](Docs/Releasing.md) for signing, notarization, and Homebrew updates.
 
 ## Other Menu-Bar Apps
 
