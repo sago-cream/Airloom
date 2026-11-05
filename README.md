@@ -6,7 +6,7 @@ Native video wallpapers and animated lock screens, controlled from a small macOS
 
 Download Airloom from [Releases](https://github.com/sago-cream/Airloom/releases), move **Airloom.app** to Applications, and open it. Choose your own MP4 on first launch. No wallpaper video is included.
 
-Click the **wind** menu-bar icon for **Import Video…**, pause, automatic pausing when the desktop is covered, lock-screen animation, login startup, and **Check for Updates…**. Import preserves the encoded video and removes audio. Your original file stays unchanged. Wallpaper processing happens locally; Sparkle contacts GitHub to check for updates.
+Click the **sparkle** menu-bar icon for **Import Video…**, pause, automatic pausing when the desktop is covered, lock-screen animation, login startup, and **Check for Updates…**. Import preserves the encoded video and removes audio. Your original file stays unchanged. Wallpaper processing happens locally; Sparkle contacts GitHub to check for updates.
 
 Desktop playback requires macOS 15 or later, on Apple Silicon or Intel. Native lock-screen animation requires macOS 26 or later and one downloaded aerial in **System Settings → Wallpaper**. Turn on **Animate Lock Screen** to use it; turn it off to restore the previous video and wallpaper selections. Authentication and FileVault remain controlled by macOS.
 
@@ -39,6 +39,7 @@ open ~/Applications/Airloom.app
 Quit an already-running copy before replacing it. The development installer preserves settings and media. Import installs the bundled screen saver at the legacy `~/Library/Screen Savers/Torii.saver` path.
 
 ```sh
+zsh Scripts/test.sh --menu
 zsh Scripts/test.sh --import /absolute/path/to/video.mp4
 zsh Scripts/test.sh --screen-saver
 zsh Scripts/test.sh --timeline

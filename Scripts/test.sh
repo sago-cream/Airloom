@@ -8,7 +8,11 @@ xcrun swiftc -swift-version 5 Sources/Shared/PlaybackPolicy.swift \
 build/tests/policy
 python3 -m py_compile Scripts/measure.py
 python3 -m unittest discover -s Tests -p 'test_*.py'
-if [[ "${1:-}" == "--import" ]]; then
+if [[ "${1:-}" == "--menu" ]]; then
+  xcrun swiftc -swift-version 5 Sources/App/StatusMenu.swift Tests/Menu/main.swift \
+    -framework AppKit -o build/tests/menu
+  build/tests/menu
+elif [[ "${1:-}" == "--import" ]]; then
   xcrun swiftc -O -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
     Sources/Shared/WallpaperSettings.swift Sources/App/VideoImporter.swift Tests/Import/main.swift \
     -framework AppKit -framework AVFoundation -o build/tests/import

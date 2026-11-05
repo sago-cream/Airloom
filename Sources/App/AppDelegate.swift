@@ -7,6 +7,7 @@ import Darwin
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var controller: DesktopController?
     private var statusItem: NSStatusItem?
+    private var statusMenu: NSMenu?
     private var updater: SPUStandardUpdaterController?
     private var updateItem: NSMenuItem?
     private var stateItem: NSMenuItem?
@@ -41,9 +42,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if hasWallpaper { startDesktop(settings: loaded) }
         updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "wind", accessibilityDescription: "Airloom wallpaper")
+        item.button?.image = NSImage(systemSymbolName: "sparkle", accessibilityDescription: "Airloom wallpaper")
         item.button?.toolTip = "Airloom — \(loaded.title)"
-        item.menu = makeMenu()
+        statusMenu = makeMenu()
+        item.button?.target = self
+        item.button?.action = #selector(toggleMenu)
+        item.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
         statusItem = item
         deactivationObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
@@ -132,15 +136,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func dismissMenu() {
         guard menuTracking else { return }
-        statusItem?.menu?.cancelTracking()
+        statusMenu?.cancelTrackingWithoutAnimation()
+    }
+
+    @objc private func toggleMenu() {
+        if menuTracking { dismissMenu() } else { showMenu() }
     }
 
     private func showMenu() {
         guard !menuTracking else { return }
         updateState()
-        guard let button = statusItem?.button, let menu = statusItem?.menu else { return }
-        NSApp.activate(ignoringOtherApps: true)
-        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.minY - 4), in: button)
+        guard let button = statusItem?.button, let menu = statusMenu else { return }
+        StatusMenu.present(menu, from: button)
     }
 
     @objc private func togglePause() {
