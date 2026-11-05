@@ -27,7 +27,14 @@ menu.addItem(withTitle: "Airloom", action: nil, keyEquivalent: "").isEnabled = f
 menu.addItem(withTitle: "Pause Wallpaper", action: nil, keyEquivalent: "")
 let outsideWindow = NSWindow(contentRect: NSRect(x: 100, y: 100, width: 100, height: 100),
                              styleMask: .borderless, backing: .buffered, defer: false)
-for outside in [false, true, false, true] {
+for (index, outside) in [false, true, false, true].enumerated() {
+    if index == 2 {
+        item.isVisible = false
+        expect(!item.isVisible, "Menu-bar icon did not hide")
+        item.isVisible = true
+        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        expect(item.isVisible, "Menu-bar icon did not return")
+    }
     var timedOut = false
     var inputSent = false
     let clickedWindow = outside ? outsideWindow : button.window!
@@ -59,4 +66,4 @@ for outside in [false, true, false, true] {
 }
 expect(probe.opens == 4 && probe.closes == 4, "Tracking did not end after every dismissal")
 NSStatusBar.system.removeStatusItem(item)
-print("Native menu passed: second icon clicks, outside clicks, repeated open/close, tracking teardown, highlight cleanup")
+print("Native menu passed: second icon clicks, outside clicks, hidden-icon recovery, repeated open/close, tracking teardown, highlight cleanup")

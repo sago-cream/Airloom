@@ -40,6 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if hasWallpaper { startDesktop(settings: loaded) }
         updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        item.behavior = [.removalAllowed]
+        item.autosaveName = "Airloom"
         item.button?.image = NSImage(systemSymbolName: "sparkle", accessibilityDescription: "Airloom wallpaper")
         item.button?.toolTip = "Airloom — \(loaded.title)"
         statusMenu = makeMenu()
@@ -55,6 +57,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case "pause": self.controller?.setPaused(true)
             case "resume": self.controller?.setPaused(false)
             case "show": self.showMenu()
+            case "hide-icon":
+                self.dismissMenu()
+                self.statusItem?.isVisible = false
+                self.writeDiagnostics()
             case "snapshot": self.writeDiagnostics()
             case "quit": NSApp.terminate(nil)
             case "continuous": self.setCoveragePause(false)
@@ -134,9 +140,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func showMenu() {
         guard !menuTracking else { return }
+        if let item = statusItem, !item.isVisible {
+            item.isVisible = true
+            DispatchQueue.main.async { [weak self] in self?.showMenu() }
+            return
+        }
         updateState()
         guard let button = statusItem?.button, let menu = statusMenu else { return }
         StatusMenu.present(menu, from: button)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        showMenu()
+        return false
     }
 
     @objc private func togglePause() {
@@ -298,7 +314,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         diagnostics["lock_screen"] = ["enabled": settings?.lockScreenSlotID != nil,
                                       "busy": lockScreenBusy, "slot_id": settings?.lockScreenSlotID ?? "",
                                       "error": lockScreenError]
-        diagnostics["menu"] = ["tracking": menuTracking]
+        diagnostics["menu"] = ["tracking": menuTracking, "visible": statusItem?.isVisible ?? false]
         guard let data = try? JSONSerialization.data(withJSONObject: diagnostics, options: [.prettyPrinted, .sortedKeys]) else { return }
         try? data.write(to: WallpaperSettings.supportURL.appendingPathComponent("status.json"), options: .atomic)
     }

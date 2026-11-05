@@ -2,6 +2,7 @@ import AppKit
 
 let arguments = CommandLine.arguments
 let commands = ["--pause": "pause", "--resume": "resume", "--snapshot": "snapshot", "--quit": "quit",
+                "--hide-menu-bar-icon": "hide-icon",
                 "--continuous-playback": "continuous", "--efficient-playback": "efficient",
                 "--enable-lock-screen": "lock-screen-on", "--disable-lock-screen": "lock-screen-off"]
 let existing = NSRunningApplication.runningApplications(withBundleIdentifier: WallpaperSettings.bundleID)
